@@ -5,6 +5,7 @@ import {
   useStudentRecordsByClassAndDate,
   useUpdateStudentStatus,
   useSubmitTeacherRecord,
+  useGenerateStudentRecords,
 } from "@/services/api/queries";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,6 +39,8 @@ export default function SetupCanteen() {
     useStudentRecordsByClassAndDate(parseInt(selectedClassId), formattedDate);
   const { mutate: updateStatus, isLoading: updatingLoader } =
     useUpdateStudentStatus();
+  const { mutate: generateRecords, isLoading: isGenerating } =
+    useGenerateStudentRecords();
   const { mutate: submitRecord, isLoading: submittingRecord } =
     useSubmitTeacherRecord();
   const classSupervisorId = classes?.find(
@@ -70,6 +73,13 @@ export default function SetupCanteen() {
       console.error(error);
       toast.error("Failed to update student status");
     }
+  };
+
+  const handleGenerateRecords = () => {
+    generateRecords({
+      classId: parseInt(selectedClassId),
+      date: selectedDate.toISOString(),
+    });
   };
 
   const handleSubmitCanteen = async () => {
@@ -123,7 +133,7 @@ export default function SetupCanteen() {
     <section className="container mx-auto py-10 px-5">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Admin Canteen Setup</h1>
+          <h1 className="text-3xl font-bold">Canteen Setup</h1>
           <p className="text-muted-foreground">
             Setup canteen records for students in a class
           </p>
@@ -174,6 +184,9 @@ export default function SetupCanteen() {
             />
           </PopoverContent>
         </Popover>
+        <Button onClick={handleGenerateRecords} disabled={isGenerating}>
+          {isGenerating ? "Generating..." : "Generate Records"}
+        </Button>
       </div>
       {classesLoading || recordsLoading ? (
         <TableSkeleton />
