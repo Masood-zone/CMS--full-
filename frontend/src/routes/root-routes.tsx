@@ -7,8 +7,8 @@ import {
   createRoutesFromElements,
   Route,
 } from "react-router-dom";
-import TeacherLayout from "@/components/layout/teacher-layout";
 import ProtectedRoute from "./protected-routes.tsx";
+// import TeacherLayout from "@/components/layout/teacher-layout";
 
 const rootRoutes = createBrowserRouter(
   createRoutesFromElements(
@@ -407,7 +407,7 @@ const rootRoutes = createBrowserRouter(
       </Route>
 
       {/* Teacher Dashboard */}
-      <Route
+      {/* <Route
         path="teacher"
         element={
           <ProtectedRoute roles={["TEACHER"]}>
@@ -448,7 +448,6 @@ const rootRoutes = createBrowserRouter(
               return { Component: SubmittedRecords };
             }}
           />
-          {/* View records */}
           <Route
             path=":id/view"
             lazy={async () => {
@@ -458,7 +457,6 @@ const rootRoutes = createBrowserRouter(
               return { Component: ViewCanteenRecord };
             }}
           />
-          {/* Edit records */}
           <Route
             path=":id/edit"
             lazy={async () => {
@@ -496,7 +494,6 @@ const rootRoutes = createBrowserRouter(
             }}
           />
         </Route>
-        {/* Settings */}
         <Route
           path="settings"
           lazy={async () => {
@@ -515,7 +512,6 @@ const rootRoutes = createBrowserRouter(
               return { Component: Settings };
             }}
           />
-          {/* Profile */}
           <Route
             path="profile"
             lazy={async () => {
@@ -525,7 +521,6 @@ const rootRoutes = createBrowserRouter(
               return { Component: Profile };
             }}
           />
-          {/* Canteen */}
           <Route
             path="canteen"
             lazy={async () => {
@@ -591,7 +586,7 @@ const rootRoutes = createBrowserRouter(
             return { Component: NotFound };
           }}
         />
-      </Route>
+      </Route> */}
     </>
   )
 );
