@@ -12,10 +12,6 @@ export const super_nav = {
           title: "Home",
           url: "/admin",
         },
-        {
-          title: "Teachers",
-          url: "/admin/teachers",
-        },
       ],
     },
     {

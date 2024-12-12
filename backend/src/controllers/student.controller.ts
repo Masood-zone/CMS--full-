@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { generateRecordsForNewStudent } from "../../services/record-generation-service";
-import prisma from "../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 export const studentController = {
   // GetAll
@@ -19,6 +20,15 @@ export const studentController = {
     try {
       const student = await prisma.student.findUnique({
         where: { id: parseInt(id) },
+        include: {
+          class: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          records: true,
+        },
       });
       if (student) {
         res.json(student);

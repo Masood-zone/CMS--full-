@@ -15,8 +15,9 @@ model User {
   phone    String?
   role     String
   gender  String?
-  assigned_class    Class?   @relation 
-  Record   Record[]
+  // assigned_class    Class?   @relation 
+  classes Class[] 
+  submittedRecords   Record[]
 }
 
 model Settings {
@@ -43,7 +44,7 @@ model Student {
   gender     String?
   classId     Int?
   class       Class?  @relation(fields: [classId], references: [id])
-  Record      Record[]
+  records      Record[]
 }
 
 model Record {
@@ -70,7 +71,7 @@ model Record {
 model Expense {
   id          Int      @id @default(autoincrement())
   referenceId Int
-  amount      Int
+  amount      Float
   date        DateTime @default(now())
   description String?
   reference   Reference @relation(fields: [referenceId], references: [id])

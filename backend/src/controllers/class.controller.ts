@@ -1,5 +1,6 @@
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import prisma from "../../lib/prisma";
+const prisma = new PrismaClient();
 
 export const classController = {
   getAll: async (req: Request, res: Response) => {
@@ -37,6 +38,15 @@ export const classController = {
           description,
           supervisorId: supervisorId ? parseInt(supervisorId) : undefined,
         },
+        include: {
+          supervisor: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
+        },
       });
       res.status(201).json(newClass);
     } catch (error) {
@@ -54,6 +64,15 @@ export const classController = {
           name,
           description,
           supervisorId: supervisorId ? parseInt(supervisorId) : undefined,
+        },
+        include: {
+          supervisor: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
         },
       });
       res.json(updatedClass);
@@ -73,42 +92,6 @@ export const classController = {
       res.status(400).json({ error: "Error deleting class" });
     }
   },
-
-  assignTeacher: async (req: Request, res: Response) => {
-    const { name } = req.params;
-    const { teacher_email } = req.body;
-
-    if (!name || !teacher_email) {
-      return res
-        .status(400)
-        .json({ message: "Class name and teacher email are required." });
-    }
-
-    try {
-      const teacher = await prisma.user.findUnique({
-        where: { email: teacher_email },
-      });
-
-      if (!teacher) {
-        return res.status(404).json({ message: "Teacher not found." });
-      }
-
-      const updatedClass = await prisma.class.update({
-        where: { name },
-        data: {
-          supervisorId: teacher.id,
-        },
-      });
-
-      return res
-        .status(200)
-        .json({ message: "Teacher assigned successfully", updatedClass });
-    } catch (error) {
-      console.error("Error assigning teacher:", error);
-      return res.status(500).json({ message: "Internal Server Error", error });
-    }
-  },
-
   getClassBySupervisorId: async (req: Request, res: Response) => {
     const { id } = req.params;
     try {

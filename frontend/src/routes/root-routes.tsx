@@ -158,7 +158,7 @@ const rootRoutes = createBrowserRouter(
           />
         </Route>
         {/* Teachers */}
-        <Route
+        {/* <Route
           path="teachers"
           lazy={async () => {
             const { default: TeachersLayout } = await import(
@@ -203,7 +203,7 @@ const rootRoutes = createBrowserRouter(
               return { Component: EditTeacher };
             }}
           />
-        </Route>
+        </Route> */}
         {/* Students */}
         <Route
           path="students"

@@ -1,13 +1,14 @@
+import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import prisma from "../../lib/prisma";
+const prisma = new PrismaClient();
 
 export const analyticsController = {
   getAdminAnalytics: async (req: Request, res: Response) => {
     try {
-      const [totalTeachers, totalStudents, totalClasses, settingsAmount] =
+      const [totalAdmins, totalStudents, totalClasses, settingsAmount] =
         await Promise.all([
           prisma.user.count({
-            where: { role: { in: ["TEACHER", "Teacher"] } },
+            where: { role: "ADMIN" },
           }),
           prisma.student.count(),
           prisma.class.count(),
@@ -16,13 +17,12 @@ export const analyticsController = {
             select: { value: true },
           }),
         ]);
-      5;
 
       const amount = settingsAmount ? parseInt(settingsAmount.value) : 0;
       const totalCollections = totalStudents * amount;
 
       res.status(200).json({
-        totalTeachers,
+        totalAdmins,
         totalStudents,
         totalCollections,
         totalClasses,
@@ -32,7 +32,8 @@ export const analyticsController = {
       res.status(500).json({ message: "Internal Server Error" });
     }
   },
-  getTeacherAnalytics: async (req: Request, res: Response) => {
+
+  getClassAnalytics: async (req: Request, res: Response) => {
     const { classId } = req.params;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -87,7 +88,89 @@ export const analyticsController = {
         },
       });
     } catch (error) {
-      console.error("Error fetching teacher analytics:", error);
+      console.error("Error fetching class analytics:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  },
+
+  getDailyAnalytics: async (req: Request, res: Response) => {
+    const { date } = req.query;
+    const queryDate = date ? new Date(date as string) : new Date();
+    queryDate.setHours(0, 0, 0, 0);
+
+    try {
+      const [
+        settingsAmount,
+        totalRecords,
+        paidRecords,
+        unpaidRecords,
+        absentRecords,
+      ] = await Promise.all([
+        prisma.settings.findFirst({
+          where: { name: "amount" },
+          select: { value: true },
+        }),
+        prisma.record.count({
+          where: {
+            submitedAt: {
+              gte: queryDate,
+              lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000),
+            },
+          },
+        }),
+        prisma.record.count({
+          where: {
+            submitedAt: {
+              gte: queryDate,
+              lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000),
+            },
+            hasPaid: true,
+          },
+        }),
+        prisma.record.count({
+          where: {
+            submitedAt: {
+              gte: queryDate,
+              lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000),
+            },
+            hasPaid: false,
+            isAbsent: false,
+          },
+        }),
+        prisma.record.count({
+          where: {
+            submitedAt: {
+              gte: queryDate,
+              lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000),
+            },
+            isAbsent: true,
+          },
+        }),
+      ]);
+
+      const amount = settingsAmount ? parseInt(settingsAmount.value) : 0;
+      const totalAmount = totalRecords * amount;
+      const paidAmount = paidRecords * amount;
+      const unpaidAmount = unpaidRecords * amount;
+
+      res.status(200).json({
+        date: queryDate.toISOString().split("T")[0],
+        totalRecords,
+        totalAmount,
+        paidRecords: {
+          count: paidRecords,
+          amount: paidAmount,
+        },
+        unpaidRecords: {
+          count: unpaidRecords,
+          amount: unpaidAmount,
+        },
+        absentRecords: {
+          count: absentRecords,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching daily analytics:", error);
       res.status(500).json({ message: "Internal Server Error" });
     }
   },

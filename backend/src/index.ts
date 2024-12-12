@@ -9,7 +9,7 @@ import { classController } from "./controllers/class.controller";
 import { userController } from "./controllers/users.controller";
 import { studentController } from "./controllers/student.controller";
 import { settingsController } from "./controllers/settings.controller";
-import teacherController from "./controllers/teahers.controller";
+// import teacherController from "./controllers/teahers.controller";
 import { setupDailyRecordCreation } from "../services/daily-records.cron";
 import { analyticsController } from "./controllers/analytics.controller";
 import { expensesController } from "./controllers/expenses.controller";
@@ -65,9 +65,6 @@ app.get("/classes/:id", authenticateToken, classController.getById); //works
 app.post("/classes", authenticateToken, classController.create); //works
 app.put("/classes/:id", authenticateToken, classController.update); //works
 app.delete("/classes/:id", authenticateToken, classController.delete); //works
-app.put("/classes/:name/assign", authenticateToken, (req, res, next) => {
-  classController.assignTeacher(req, res).catch(next);
-}); //Not used
 app.get(
   "/classes/:id/supervisor",
   authenticateToken,
@@ -93,6 +90,7 @@ app.put("/students/:id", authenticateToken, studentController.update);
 app.delete("/students/:id", authenticateToken, studentController.delete);
 
 // Record routes
+// Record routes
 app.get("/records", authenticateToken, async (req, res, next) => {
   try {
     await recordController.getAllRecords(req, res);
@@ -105,24 +103,6 @@ app.post(
   authenticateToken,
   recordController.generateDailyRecords
 );
-app.get("/records/teachers", authenticateToken, async (req, res, next) => {
-  try {
-    await recordController.getAllTeacherSubmittedRecords(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.get(
-  "/records/:teacherId/detail",
-  authenticateToken,
-  async (req, res, next) => {
-    try {
-      await recordController.getSingleTeacherRecordByDate(req, res);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
 app.get("/records/:classId", authenticateToken, async (req, res, next) => {
   try {
     await recordController.getStudentRecordsByClassAndDate(req, res);
@@ -134,22 +114,20 @@ app.put("/records/:id", authenticateToken, recordController.update);
 app.delete("/records/:id", authenticateToken, recordController.delete);
 app.post("/records/submit", authenticateToken, async (req, res, next) => {
   try {
-    await recordController.submitTeacherRecord(req, res);
+    await recordController.submitAdminRecord(req, res);
   } catch (error) {
     next(error);
   }
 });
-app.get(
-  "/records/teacher/:teacherId",
-  authenticateToken,
-  async (req, res, next) => {
-    try {
-      await recordController.getTeacherSubmittedRecords(req, res);
-    } catch (error) {
-      next(error);
-    }
+
+// Update student status
+app.put("/records/:id/status", authenticateToken, async (req, res, next) => {
+  try {
+    await recordController.updateStudentStatus(req, res);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 // Update student status
 app.put("/records/:id/status", authenticateToken, async (req, res, next) => {
@@ -169,73 +147,73 @@ app.put("/settings/amount", authenticateToken, (req, res, next) => {
 });
 
 // Teacher routes
-app.get("/teachers", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.getAllTeachers(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.get("/teachers/summary", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.getTeachersWithRecordsSummary(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.get(
-  "/teachers/:teacherId/detail",
-  authenticateToken,
-  async (req, res, next) => {
-    try {
-      await teacherController.getTeacherRecordsDetail(req, res);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-app.get("/teachers/:id", async (req, res, next) => {
-  try {
-    await teacherController.getTeachersById(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.get("/teachers/:id/records", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.getTeacherRecords(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.post("/teachers", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.createTeacher(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.put("/teachers/:id", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.updateTeacher(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.delete("/teachers/:id", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.deleteTeacher(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
-app.get("/teachers/:id/class", authenticateToken, async (req, res, next) => {
-  try {
-    await teacherController.getClassBySupervisorId(req, res);
-  } catch (error) {
-    next(error);
-  }
-});
+// app.get("/teachers", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.getAllTeachers(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.get("/teachers/summary", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.getTeachersWithRecordsSummary(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.get(
+//   "/teachers/:teacherId/detail",
+//   authenticateToken,
+//   async (req, res, next) => {
+//     try {
+//       await teacherController.getTeacherRecordsDetail(req, res);
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
+// app.get("/teachers/:id", async (req, res, next) => {
+//   try {
+//     await teacherController.getTeachersById(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.get("/teachers/:id/records", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.getTeacherRecords(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.post("/teachers", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.createTeacher(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.put("/teachers/:id", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.updateTeacher(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.delete("/teachers/:id", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.deleteTeacher(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+// app.get("/teachers/:id/class", authenticateToken, async (req, res, next) => {
+//   try {
+//     await teacherController.getClassBySupervisorId(req, res);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 // Expenses routes
 // Get all expenses
@@ -321,25 +299,12 @@ app.delete("/references/:id", authenticateToken, async (req, res, next) => {
 });
 
 // Analytics routes
-// Admin analytics
 app.get(
   "/analytics/admin-dashboard",
   authenticateToken,
   async (req, res, next) => {
     try {
       await analyticsController.getAdminAnalytics(req, res);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-// Teachers analytics
-app.get(
-  "/analytics/teachers/:classId",
-  authenticateToken,
-  async (req, res, next) => {
-    try {
-      await analyticsController.getTeacherAnalytics(req, res);
     } catch (error) {
       next(error);
     }

@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import prisma from "../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 export const userController = {
   signup: async (req: Request, res: Response) => {
@@ -80,7 +81,13 @@ export const userController = {
           phone: true,
           role: true,
           gender: true,
-          assigned_class: true,
+          // assigned_class: true,
+          classes: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
       res.json(users);
@@ -101,7 +108,13 @@ export const userController = {
           phone: true,
           role: true,
           gender: true,
-          assigned_class: true,
+          // assigned_class: true,
+          classes: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
       if (user) {
@@ -128,7 +141,12 @@ export const userController = {
           phone: true,
           role: true,
           gender: true,
-          assigned_class: true,
+          classes: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
       res.json(updatedUser);
