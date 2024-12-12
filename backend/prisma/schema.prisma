@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String?
+  name     String?
+  phone    String?
+  role     String
+  gender  String?
+  assigned_class    Class?   @relation 
+  Record   Record[]
+}
+
+model Settings {
+  id      Int @id @default(autoincrement())
+  name    String
+  value   String
+}
+
+model Class {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique // Ensure class names are unique
+  description  String?
+  supervisorId Int?      @unique // Each class can have one unique supervisor
+  records Record[]
+  students     Student[]
+  supervisor   User?     @relation(fields: [supervisorId], references: [id])
+}
+
+model Student {
+  id          Int      @id @default(autoincrement())
+  name        String
+  age         Int
+  parentPhone String?
+  gender     String?
+  classId     Int?
+  class       Class?  @relation(fields: [classId], references: [id])
+  Record      Record[]
+}
+
+model Record {
+  id             Int      @id @default(autoincrement())
+  amount         Int
+  submitedAt     DateTime @default(now())
+  submitedBy     Int
+  payedBy        Int?
+  isPrepaid      Boolean  @default(false)
+  hasPaid        Boolean  @default(false)
+  isAbsent       Boolean  @default(false)
+  settingsAmount Int
+  teacher        User     @relation(fields: [submitedBy], references: [id], onDelete: Cascade)
+  student        Student? @relation(fields: [payedBy], references: [id])
+  classId        Int?     
+  class          Class?   @relation(fields: [classId], references: [id])
+
+  @@unique([payedBy, submitedAt])
+  @@index([submitedBy])
+  @@index([payedBy])
+  @@index([classId])
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  referenceId Int
+  amount      Int
+  date        DateTime @default(now())
+  description String?
+  reference   Reference @relation(fields: [referenceId], references: [id])
+  submitedBy  Int
+}
+
+model Reference {
+  id          Int      @id @unique @default(autoincrement())
+  name        String
+  description String?
+  expenses    Expense[]
+}
