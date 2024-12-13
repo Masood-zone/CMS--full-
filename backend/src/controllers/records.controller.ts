@@ -4,10 +4,19 @@ const prisma = new PrismaClient();
 
 export const recordController = {
   generateDailyRecords: async (req: Request, res: Response) => {
-    const { classId, adminId } = req.query;
-    const id = adminId ? parseInt(adminId as string) : 0;
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
+    const { classId, date } = req.params;
+    const { id } = req.query;
+
+    if (!id) {
+      return res.status(400).json({ error: "Admin ID is required " + id });
+    }
+
+    const recordDate = new Date(date as string);
+    recordDate.setHours(0, 0, 0, 0);
+
+    if (isNaN(recordDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date provided " + date });
+    }
 
     try {
       const settings = await prisma.settings.findFirst({
@@ -34,25 +43,29 @@ export const recordController = {
               data: {
                 classId: classItem.id,
                 payedBy: student.id,
-                submitedAt: date,
-                amount: 0,
+                submitedAt: recordDate,
+                amount: settingsAmount,
                 hasPaid: false,
                 isPrepaid: false,
                 isAbsent: false,
                 settingsAmount,
-                submitedBy: id, // Assuming req.user is set by the authentication middleware
+                submitedBy: parseInt(id as string),
               },
             });
             createdRecords.push(record);
           } catch (error) {
-            if (
-              (error as Prisma.PrismaClientKnownRequestError).code === "P2002"
-            ) {
-              skippedRecords.push({
-                studentId: student.id,
-                date: date.toISOString(),
-              });
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+              if (error.code === "P2002") {
+                skippedRecords.push({
+                  studentId: student.id,
+                  date: recordDate.toISOString(),
+                });
+              } else {
+                console.error("Prisma error:", error);
+                throw error;
+              }
             } else {
+              console.error("Unknown error:", error);
               throw error;
             }
           }

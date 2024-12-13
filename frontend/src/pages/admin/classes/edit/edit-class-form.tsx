@@ -13,13 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
-import { useFetchTeacher, useUpdateClass } from "@/services/api/queries";
+import { useFetchSupervisor, useUpdateClass } from "@/services/api/queries";
 
 export default function EditClassForm({
   classData,
-  teachersList,
+  supervisorsList,
 }: {
-  teachersList: Teacher[];
+  supervisorsList: Teacher[];
   classData: Class;
 }) {
   const { mutate: updateClass, isLoading } = useUpdateClass();
@@ -27,7 +27,7 @@ export default function EditClassForm({
   const supervisorId = watch("supervisorId");
 
   const teacherId = classData?.supervisorId;
-  const { data: activeTeacher } = useFetchTeacher(Number(teacherId));
+  const { data: activeTeacher } = useFetchSupervisor(Number(teacherId));
 
   const onSubmit = async (data: Class) => {
     try {
@@ -65,11 +65,11 @@ export default function EditClassForm({
           >
             <SelectTrigger>
               <SelectValue
-                placeholder={activeTeacher?.data?.name || "Select a teacher"}
+                placeholder={activeTeacher?.name || "Select a teacher"}
               />
             </SelectTrigger>
             <SelectContent>
-              {teachersList?.map((teacher) => (
+              {supervisorsList?.map((teacher) => (
                 <SelectItem
                   key={teacher.id}
                   value={teacher?.id?.toString() || ""}

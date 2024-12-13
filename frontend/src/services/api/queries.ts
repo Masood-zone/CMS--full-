@@ -5,10 +5,6 @@ import {
   createClass,
   fetchStudents,
   createStudent,
-  fetchTeachers,
-  fetchTeacher,
-  updateTeacher,
-  createTeacher,
   updateClass,
   fetchStudent,
   updateStudent,
@@ -20,9 +16,7 @@ import {
   updateRecordsAmount,
   updateStudentStatus,
   fetchClass,
-  fetchTeacherAnalytics,
   fetchAdminAnalytics,
-  getTeacherSubmittedRecords,
   submitTeacherRecord,
   getStudentRecordsByClassAndDate,
   fetchExpenses,
@@ -35,8 +29,14 @@ import {
   fetchReference,
   fetchRecords,
   createRecordsAmount,
-  getTeacherRecords,
+  // updateTeacher,
+  // createTeacher,
+  // fetchTeacherAnalytics,
+  // getTeacherSubmittedRecords,
+  // getTeacherRecords,
   generateRecordForADate,
+  fetchSupervisors,
+  fetchSupervisor,
 } from "@/services/api";
 import { apiClient } from "../root";
 import { useNavigate } from "react-router-dom";
@@ -63,21 +63,21 @@ export const useFetchRecordsAmount = () => {
   });
 };
 /**
- * Query: Fetch all teachers.
+ * Query: Fetch all supervisors.
  */
-export const useFetchTeachers = () => {
-  return useQuery(["teachers"], fetchTeachers, {
+export const useFetchSupervisors = () => {
+  return useQuery(["supervisors"], fetchSupervisors, {
     onError: (error) => {
       console.error(error);
-      toast.error("Failed to fetch teachers.");
+      toast.error("Failed to fetch supervisors.");
     },
   });
 };
 /**
  * Query: Fetch teacher
  */
-export const useFetchTeacher = (id: number) => {
-  return useQuery(["teachers", id], () => fetchTeacher(id), {
+export const useFetchSupervisor = (id: number) => {
+  return useQuery(["teachers", id], () => fetchSupervisor(id), {
     onError: (error) => {
       console.error(error);
       toast.error("Failed to fetch teacher.");
@@ -135,7 +135,7 @@ export const useFetchClassById = (id: number) => {
  * Query: Fetch a student.
  */
 export const useFetchStudent = (id: number) => {
-  return useQuery(["teachers", id], () => fetchStudent(id), {
+  return useQuery(["student", id], () => fetchStudent(id), {
     onError: (error) => {
       console.log(error);
       toast.error("Failed to fetch student.");
@@ -297,66 +297,66 @@ export const useUpdateUser = () => {
 /**
  * Mutation: Create a teacher.
  */
-export const useCreateTeacher = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  return useMutation((data: Teacher) => createTeacher(data), {
-    onSuccess: () => {
-      toast.success("Teacher created successfully!");
-      // Invalidate the query to refresh the table
-      queryClient.invalidateQueries(["teachers"]);
-      //Navigate to the teachers page after creating a teacher
-      navigate("/admin/teachers");
-    },
-    onError: (error) => {
-      console.error(error);
-      toast.error("Failed to create teacher. Please try again.");
-    },
-  });
-};
+// export const useCreateTeacher = () => {
+//   const queryClient = useQueryClient();
+//   const navigate = useNavigate();
+//   return useMutation((data: Teacher) => createTeacher(data), {
+//     onSuccess: () => {
+//       toast.success("Teacher created successfully!");
+//       // Invalidate the query to refresh the table
+//       queryClient.invalidateQueries(["teachers"]);
+//       //Navigate to the teachers page after creating a teacher
+//       navigate("/admin/teachers");
+//     },
+//     onError: (error) => {
+//       console.error(error);
+//       toast.error("Failed to create teacher. Please try again.");
+//     },
+//   });
+// };
 /**
  * Mutation: Update a teacher.
  */
-export const useUpdateTeacher = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  return useMutation((data: Teacher) => updateTeacher(data), {
-    onSuccess: () => {
-      toast.success("Teacher updated successfully!");
-      // Invalidate the query to refresh the table
-      queryClient.invalidateQueries(["teachers"]);
-      //Navigate to the teachers page after updating a teacher
-      navigate("/admin/teachers");
-    },
-    onError: (error) => {
-      console.error(error);
-      toast.error("Failed to update teacher. Please try again.");
-    },
-  });
-};
+// export const useUpdateTeacher = () => {
+//   const queryClient = useQueryClient();
+//   const navigate = useNavigate();
+//   return useMutation((data: Teacher) => updateTeacher(data), {
+//     onSuccess: () => {
+//       toast.success("Teacher updated successfully!");
+//       // Invalidate the query to refresh the table
+//       queryClient.invalidateQueries(["teachers"]);
+//       //Navigate to the teachers page after updating a teacher
+//       navigate("/admin/teachers");
+//     },
+//     onError: (error) => {
+//       console.error(error);
+//       toast.error("Failed to update teacher. Please try again.");
+//     },
+//   });
+// };
 
 /*
  * Query: Fetch a teacher record detail
  */
-export const useFetchTeacherRecordsDetail = (date: Date) => {
-  return useQuery(
-    ["teacherRecordsDetail", date],
-    async () => {
-      const response = await apiClient.get(`/records/teachers`, {
-        params: {
-          date: date.toISOString(),
-        },
-      });
-      return response.data;
-    },
-    {
-      onError: (error) => {
-        console.error(error);
-        // Handle error (e.g., show a toast notification)
-      },
-    }
-  );
-};
+// export const useFetchTeacherRecordsDetail = (date: Date) => {
+//   return useQuery(
+//     ["teacherRecordsDetail", date],
+//     async () => {
+//       const response = await apiClient.get(`/records/teachers`, {
+//         params: {
+//           date: date.toISOString(),
+//         },
+//       });
+//       return response.data;
+//     },
+//     {
+//       onError: (error) => {
+//         console.error(error);
+//         // Handle error (e.g., show a toast notification)
+//       },
+//     }
+//   );
+// };
 
 /**
  * Mutation: Generate student records.
@@ -364,8 +364,8 @@ export const useFetchTeacherRecordsDetail = (date: Date) => {
 export const useGenerateStudentRecords = () => {
   const queryClient = useQueryClient();
   return useMutation(
-    (data: { classId: number; date: string }) =>
-      generateRecordForADate(data.classId, data.date),
+    (data: { classId: number; date: string; adminId: number }) =>
+      generateRecordForADate(data.classId, data.date, data.adminId),
     {
       onSuccess: () => {
         toast.success(`Records generated successfully!`);
@@ -556,28 +556,29 @@ export const useSubmitTeacherRecord = () => {
 /**
  * Query: Get all records of absent students by class and date.
  */
-export const useTeacherSubmittedRecords = (teacherId: number, date: string) => {
-  return useQuery(
-    ["submittedRecords", teacherId, date],
-    () => getTeacherSubmittedRecords(teacherId, date),
-    {
-      enabled: !!teacherId && !!date,
-      onError: (error) => {
-        console.error(error);
-        toast.error("Failed to fetch submitted records.");
-      },
-    }
-  );
-};
-export const useTeacherRecords = (date: string) => {
-  return useQuery(["teacherRecords", date], () => getTeacherRecords(date), {
-    enabled: !!date,
-    onError: (error) => {
-      console.error(error);
-      toast.error("Failed to fetch submitted records.");
-    },
-  });
-};
+// export const useTeacherSubmittedRecords = (teacherId: number, date: string) => {
+//   return useQuery(
+//     ["submittedRecords", teacherId, date],
+//     () => getTeacherSubmittedRecords(teacherId, date),
+//     {
+//       enabled: !!teacherId && !!date,
+//       onError: (error) => {
+//         console.error(error);
+//         toast.error("Failed to fetch submitted records.");
+//       },
+//     }
+//   );
+// };
+
+// export const useTeacherRecords = (date: string) => {
+//   return useQuery(["teacherRecords", date], () => getTeacherRecords(date), {
+//     enabled: !!date,
+//     onError: (error) => {
+//       console.error(error);
+//       toast.error("Failed to fetch submitted records.");
+//     },
+//   });
+// };
 
 /**
  * Mutation: Update a student status.
@@ -624,14 +625,14 @@ export const useAdminDashboardAnalytics = () => {
 /**
  * Query: Teacher's Analytics
  */
-export const useTeacherAnalytics = (id: number) => {
-  return useQuery(["teacherAnalytics", id], () => fetchTeacherAnalytics(id), {
-    onError: (error) => {
-      console.error(error);
-      toast.error("Failed to fetch teacher analytics.");
-    },
-  });
-};
+// export const useTeacherAnalytics = (id: number) => {
+//   return useQuery(["teacherAnalytics", id], () => fetchTeacherAnalytics(id), {
+//     onError: (error) => {
+//       console.error(error);
+//       toast.error("Failed to fetch teacher analytics.");
+//     },
+//   });
+// };
 
 /**
  * Delete a resource and handle errors.

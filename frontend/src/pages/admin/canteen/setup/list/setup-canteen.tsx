@@ -27,8 +27,11 @@ import { CanteenTable } from "@/components/tables/canteen-table";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/shared/page-loader/loaders";
 import { columns } from "./columns";
+import { useAuthStore } from "@/store/authStore";
 
 export default function SetupCanteen() {
+  const { user } = useAuthStore();
+  const adminId = user?.user?.id;
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedClassId, setSelectedClassId] = useState<string>("");
 
@@ -79,6 +82,7 @@ export default function SetupCanteen() {
     generateRecords({
       classId: parseInt(selectedClassId),
       date: selectedDate.toISOString(),
+      adminId: adminId ?? 0,
     });
   };
 

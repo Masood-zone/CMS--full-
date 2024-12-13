@@ -30,7 +30,7 @@ model Class {
   id           Int       @id @default(autoincrement())
   name         String    @unique // Ensure class names are unique
   description  String?
-  supervisorId Int?      @unique // Each class can have one unique supervisor
+  supervisorId Int?     
   records Record[]
   students     Student[]
   supervisor   User?     @relation(fields: [supervisorId], references: [id])

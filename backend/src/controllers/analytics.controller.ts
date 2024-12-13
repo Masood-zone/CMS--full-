@@ -8,7 +8,7 @@ export const analyticsController = {
       const [totalAdmins, totalStudents, totalClasses, settingsAmount] =
         await Promise.all([
           prisma.user.count({
-            where: { role: "ADMIN" },
+            where: { role: "SUPER_ADMIN" },
           }),
           prisma.student.count(),
           prisma.class.count(),

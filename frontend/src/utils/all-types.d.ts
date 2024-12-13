@@ -70,7 +70,7 @@ type Class = {
   name: string;
   description: string;
   supervisorId: string | number;
-  class_teacher?: {
+  supervisor?: {
     name: string;
   };
 };

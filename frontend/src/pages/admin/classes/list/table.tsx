@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { useDeleteResource, useFetchTeachers } from "@/services/api/queries";
+import { useDeleteResource } from "@/services/api/queries";
 import { TableSkeleton } from "@/components/shared/page-loader/loaders";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ClassesTable({
   data,
@@ -17,11 +16,6 @@ export default function ClassesTable({
   isLoading: boolean;
   error: unknown;
 }) {
-  const {
-    data: teachers,
-    isLoading: isTeachersLoading,
-    isError,
-  } = useFetchTeachers();
   const { mutateAsync: deleteClass } = useDeleteResource("classes", "classes");
   const columns: ColumnDef<Class>[] = [
     {
@@ -72,29 +66,21 @@ export default function ClassesTable({
       },
     },
     {
-      accessorKey: "class_teacher",
+      accessorKey: "supervisor",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Teacher
+            Supervisor
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
       },
       cell: ({ row }) => {
-        const { supervisorId } = row.original;
-        if (isTeachersLoading)
-          return <Skeleton className="bg-muted/50 w-full h-8" />;
-        if (isError) return <span>Error fetching teachers</span>;
-        // Find the teacher with the matching supervisorId
-        const teacher = teachers?.find(
-          (teacher: Teacher) => String(teacher.id) === String(supervisorId)
-        );
-
-        return <span>{teacher?.name || "No teacher assigned"}</span>;
+        const adminName = row?.original?.supervisor?.name;
+        return <span>{adminName || "No teacher assigned"}</span>;
       },
     },
     {

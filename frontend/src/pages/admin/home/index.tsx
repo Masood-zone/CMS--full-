@@ -20,10 +20,10 @@ export default function AdminHome() {
         ) : (
           <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-4">
             <AnalyticsCard
-              title="Total Teachers"
-              value={analytics?.totalTeachers || 0}
+              title="Total Admins"
+              value={analytics?.totalAdmins || 0}
               icon={<Users className="size-6 text-muted-foreground" />}
-              notice="Total number of teachers in the school"
+              notice="Total number of admins in the school"
             />
             <AnalyticsCard
               title="Total Students"

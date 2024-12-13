@@ -5,7 +5,17 @@ const prisma = new PrismaClient();
 export const classController = {
   getAll: async (req: Request, res: Response) => {
     try {
-      const classes = await prisma.class.findMany();
+      const classes = await prisma.class.findMany({
+        include: {
+          supervisor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
       res.json(classes);
     } catch (error) {
       res.status(500).json({ error: "Error fetching classes" });

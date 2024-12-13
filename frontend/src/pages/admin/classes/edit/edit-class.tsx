@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useFetchClassById, useFetchTeachers } from "@/services/api/queries";
+import { useFetchClassById, useFetchSupervisors } from "@/services/api/queries";
 import { useParams } from "react-router-dom";
 import EditClassForm from "./edit-class-form";
 
@@ -20,7 +20,7 @@ export default function EditClass() {
     isLoading: boolean;
     error: { message: string } | null;
   };
-  const { data: teachers } = useFetchTeachers();
+  const { data: supervisors } = useFetchSupervisors();
 
   return (
     <section className="w-full">
@@ -42,7 +42,7 @@ export default function EditClass() {
             {error?.message}
           </div>
         ) : (
-          <EditClassForm classData={classData} teachersList={teachers} />
+          <EditClassForm classData={classData} supervisorsList={supervisors} />
         )}
       </Card>
     </section>

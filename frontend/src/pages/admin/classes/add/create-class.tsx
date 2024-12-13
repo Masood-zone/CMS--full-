@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateClass, useFetchTeachers } from "@/services/api/queries";
+import { useCreateClass, useFetchSupervisors } from "@/services/api/queries";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 export default function AddClass() {
@@ -31,9 +31,8 @@ export default function AddClass() {
     handleSubmit,
     formState: { errors },
   } = useForm<Class>();
+  const { data: supervisors } = useFetchSupervisors();
   const { mutate: createClass, isLoading } = useCreateClass();
-
-  const { data: teachers } = useFetchTeachers();
   const supervisorId = watch("supervisorId");
   const onSubmit: SubmitHandler<Class> = async (data) => {
     try {
@@ -42,6 +41,7 @@ export default function AddClass() {
       console.log(error);
     }
   };
+  console.log(supervisors);
 
   return (
     <section className="w-full">
@@ -87,7 +87,7 @@ export default function AddClass() {
                   <SelectValue placeholder="Select a teacher" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teachers?.map((teacher: Teacher) => (
+                  {supervisors?.map((teacher: Teacher) => (
                     <SelectItem
                       key={teacher?.id}
                       value={teacher?.id?.toString() || ""}
