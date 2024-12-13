@@ -5,21 +5,21 @@ const prisma = new PrismaClient();
 export const analyticsController = {
   getAdminAnalytics: async (req: Request, res: Response) => {
     try {
-      const [totalAdmins, totalStudents, totalClasses, settingsAmount] =
+      const [totalAdmins, totalStudents, totalClasses, totalAmount] =
         await Promise.all([
           prisma.user.count({
             where: { role: "SUPER_ADMIN" },
           }),
           prisma.student.count(),
           prisma.class.count(),
-          prisma.settings.findFirst({
-            where: { name: "amount" },
-            select: { value: true },
+          prisma.record.aggregate({
+            _sum: {
+              amount: true,
+            },
           }),
         ]);
 
-      const amount = settingsAmount ? parseInt(settingsAmount.value) : 0;
-      const totalCollections = totalStudents * amount;
+      const totalCollections = totalAmount._sum.amount || 0;
 
       res.status(200).json({
         totalAdmins,
@@ -39,51 +39,57 @@ export const analyticsController = {
     today.setHours(0, 0, 0, 0);
 
     try {
-      const [settingsAmount, totalStudents, paidStudents, unpaidStudents] =
-        await Promise.all([
-          prisma.settings.findFirst({
-            where: { name: "amount" },
-            select: { value: true },
-          }),
-          prisma.student.count({
-            where: { classId: parseInt(classId) },
-          }),
-          prisma.record.count({
-            where: {
-              classId: parseInt(classId),
-              submitedAt: { gte: today },
-              hasPaid: true,
-              payedBy: {
-                not: null,
-              },
+      const [totalStudents, paidRecords, unpaidRecords] = await Promise.all([
+        prisma.student.count({
+          where: { classId: parseInt(classId) },
+        }),
+        prisma.record.findMany({
+          where: {
+            classId: parseInt(classId),
+            submitedAt: { gte: today },
+            hasPaid: true,
+            payedBy: {
+              not: null,
             },
-          }),
-          prisma.record.count({
-            where: {
-              classId: parseInt(classId),
-              submitedAt: { gte: today },
-              hasPaid: false,
-              payedBy: {
-                not: null,
-              },
+          },
+          select: {
+            amount: true,
+          },
+        }),
+        prisma.record.findMany({
+          where: {
+            classId: parseInt(classId),
+            submitedAt: { gte: today },
+            hasPaid: false,
+            payedBy: {
+              not: null,
             },
-          }),
-        ]);
+          },
+          select: {
+            amount: true,
+          },
+        }),
+      ]);
 
-      const amount = settingsAmount ? parseInt(settingsAmount.value) : 0;
-      const totalAmount = totalStudents * amount;
-      const paidAmount = paidStudents * amount;
-      const unpaidAmount = unpaidStudents * amount;
+      const paidAmount = paidRecords.reduce(
+        (sum, record) => sum + record.amount,
+        0
+      );
+      const unpaidAmount = unpaidRecords.reduce(
+        (sum, record) => sum + record.amount,
+        0
+      );
+      const totalAmount = paidAmount + unpaidAmount;
 
       res.status(200).json({
         totalAmount,
         totalStudents,
         paidStudents: {
-          count: paidStudents,
+          count: paidRecords.length,
           amount: paidAmount,
         },
         unpaidStudents: {
-          count: unpaidStudents,
+          count: unpaidRecords.length,
           amount: unpaidAmount,
         },
       });
@@ -99,26 +105,8 @@ export const analyticsController = {
     queryDate.setHours(0, 0, 0, 0);
 
     try {
-      const [
-        settingsAmount,
-        totalRecords,
-        paidRecords,
-        unpaidRecords,
-        absentRecords,
-      ] = await Promise.all([
-        prisma.settings.findFirst({
-          where: { name: "amount" },
-          select: { value: true },
-        }),
-        prisma.record.count({
-          where: {
-            submitedAt: {
-              gte: queryDate,
-              lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000),
-            },
-          },
-        }),
-        prisma.record.count({
+      const [paidRecords, unpaidRecords, absentRecords] = await Promise.all([
+        prisma.record.findMany({
           where: {
             submitedAt: {
               gte: queryDate,
@@ -126,8 +114,11 @@ export const analyticsController = {
             },
             hasPaid: true,
           },
+          select: {
+            amount: true,
+          },
         }),
-        prisma.record.count({
+        prisma.record.findMany({
           where: {
             submitedAt: {
               gte: queryDate,
@@ -135,6 +126,9 @@ export const analyticsController = {
             },
             hasPaid: false,
             isAbsent: false,
+          },
+          select: {
+            amount: true,
           },
         }),
         prisma.record.count({
@@ -148,21 +142,28 @@ export const analyticsController = {
         }),
       ]);
 
-      const amount = settingsAmount ? parseInt(settingsAmount.value) : 0;
-      const totalAmount = totalRecords * amount;
-      const paidAmount = paidRecords * amount;
-      const unpaidAmount = unpaidRecords * amount;
+      const paidAmount = paidRecords.reduce(
+        (sum, record) => sum + record.amount,
+        0
+      );
+      const unpaidAmount = unpaidRecords.reduce(
+        (sum, record) => sum + record.amount,
+        0
+      );
+      const totalAmount = paidAmount + unpaidAmount;
+      const totalRecords =
+        paidRecords.length + unpaidRecords.length + absentRecords;
 
       res.status(200).json({
         date: queryDate.toISOString().split("T")[0],
         totalRecords,
         totalAmount,
         paidRecords: {
-          count: paidRecords,
+          count: paidRecords.length,
           amount: paidAmount,
         },
         unpaidRecords: {
-          count: unpaidRecords,
+          count: unpaidRecords.length,
           amount: unpaidAmount,
         },
         absentRecords: {
