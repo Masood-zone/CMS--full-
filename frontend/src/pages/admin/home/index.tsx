@@ -35,7 +35,7 @@ export default function AdminHome() {
               title="Total Collections"
               value={`₵${analytics?.totalCollections || 0}`}
               icon={<CurrencyIcon className="size-6 text-muted-foreground" />}
-              notice="Total expected amount from all students"
+              notice="Total expected amount based on all canteen collections"
             />
             <AnalyticsCard
               title="Total Classes"

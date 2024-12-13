@@ -23,7 +23,7 @@ import {
   useUpdateExpense,
 } from "@/services/api/queries";
 import { useAuthStore } from "@/store/authStore";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -40,14 +40,12 @@ export default function EditExpense() {
   const date = expense?.date;
 
   const [selectedDate, setSelectedDate] = useState<Date>(
-    () => date && new Date(date)
+    () => date && format(parseISO(expense?.date), "yyyy-MM-dd")
   );
   const reference = references?.find(
     (reference: Reference) => reference?.id === expense?.reference?.id
   );
-  const referenceName = reference?.name;
   const submitterId = user?.user?.id;
-
   const { mutate: updateExpense, isLoading: updatingExpense } =
     useUpdateExpense();
 
@@ -88,12 +86,12 @@ export default function EditExpense() {
           <Label htmlFor="references">References</Label>
           <Select
             value={referenceId?.toString()}
-            defaultValue={referenceName}
+            defaultValue={reference?.id?.toString()}
             onValueChange={(value) => setValue("references.id", Number(value))}
           >
             <SelectTrigger>
               <SelectValue
-                placeholder={referenceName || "No reference selected"}
+                placeholder={reference?.id || "No reference selected"}
               />
             </SelectTrigger>
             <SelectContent>
