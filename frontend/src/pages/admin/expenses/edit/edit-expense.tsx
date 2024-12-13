@@ -1,4 +1,5 @@
 import ButtonLoader from "@/components/shared/button-loader/button-loader";
+import GoBackButton from "@/components/shared/go-back/go-back";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -79,7 +80,10 @@ export default function EditExpense() {
 
   return (
     <div className="p-5 space-y-3">
-      <h1 className="text-2xl font-bold">Edit Expense</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Edit Expense</h1>
+        <GoBackButton />
+      </div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* References*/}
         <div className="space-y-2">
