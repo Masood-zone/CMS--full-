@@ -538,7 +538,7 @@ export const useStudentRecordsByClassAndDate = (
 };
 
 // New mutation for submitting teacher records
-export const useSubmitTeacherRecord = () => {
+export const useSubmitAdminRecord = () => {
   const queryClient = useQueryClient();
   return useMutation(submitTeacherRecord, {
     onSuccess: () => {

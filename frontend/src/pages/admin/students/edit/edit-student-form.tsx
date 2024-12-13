@@ -33,7 +33,6 @@ export default function EditStudentForm({
 
   const gender = watch("gender");
   const classId = watch("classId");
-  const activeClass = classList?.find((c) => c.id === classId);
 
   const onSubmit = async (data: Student) => {
     try {
@@ -92,7 +91,9 @@ export default function EditStudentForm({
             defaultValue=""
           >
             <SelectTrigger className="bg-transparent">
-              <SelectValue placeholder={activeClass?.name || "Select Class"} />
+              <SelectValue
+                placeholder={studentData?.class?.name || "Select Class"}
+              />
             </SelectTrigger>
             <SelectContent>
               {classList?.map((classItem) => (

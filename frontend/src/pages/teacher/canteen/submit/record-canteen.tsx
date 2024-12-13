@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import {
   useStudentRecordsByClassAndDate,
-  useSubmitTeacherRecord,
+  useSubmitAdminRecord,
 } from "@/services/api/queries";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,7 +34,7 @@ export default function SubmitCanteenRecords() {
     error,
   } = useStudentRecordsByClassAndDate(classId, formattedDate);
   const { mutate: submitRecord, isLoading: isSubmitting } =
-    useSubmitTeacherRecord();
+    useSubmitAdminRecord();
 
   useEffect(() => {
     if (studentRecords) {

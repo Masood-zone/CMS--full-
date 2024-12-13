@@ -4,14 +4,15 @@ const prisma = new PrismaClient();
 
 export const recordController = {
   generateDailyRecords: async (req: Request, res: Response) => {
-    const { classId, date } = req.params;
-    const { id } = req.query;
+    const { date, classId, id } = req.query;
 
     if (!id) {
-      return res.status(400).json({ error: "Admin ID is required " + id });
+      return res.status(400).json({
+        error: "Admin ID is required",
+      });
     }
 
-    const recordDate = new Date(date as string);
+    const recordDate = new Date(date as unknown as string);
     recordDate.setHours(0, 0, 0, 0);
 
     if (isNaN(recordDate.getTime())) {
@@ -140,9 +141,11 @@ export const recordController = {
       unpaidStudents,
       paidStudents,
       absentStudents,
-      adminId,
+      submittedBy,
     } = req.body;
-    const id = adminId ? parseInt(adminId as string) : 0;
+
+    const id = submittedBy ? parseInt(submittedBy as string) : 0;
+
     if (
       !classId ||
       !date ||
@@ -162,12 +165,37 @@ export const recordController = {
       const startOfDay = new Date(parsedDate);
       startOfDay.setHours(0, 0, 0, 0);
 
+      // Validate classId exists
+      const classExists = await prisma.class.findUnique({
+        where: { id: parseInt(classId) },
+      });
+      if (!classExists) {
+        return res.status(404).json({ error: "Class not found" });
+      }
+
+      // Validate adminId (submitedBy) exists
+      const adminExists = await prisma.user.findUnique({ where: { id } });
+      if (!adminExists) {
+        return res.status(404).json({ error: "Admin user not found" });
+      }
+
+      // Validate all payedBy IDs exist in Student table
       const allStudents = [
         ...unpaidStudents,
         ...paidStudents,
         ...absentStudents,
       ];
+      const payedByIds = allStudents.map((student) => parseInt(student.paidBy));
+      const studentsExist = await prisma.student.findMany({
+        where: { id: { in: payedByIds } },
+      });
+      if (studentsExist.length !== payedByIds.length) {
+        return res
+          .status(404)
+          .json({ error: "One or more students not found" });
+      }
 
+      // Perform upsert for records
       const updatedRecords = await prisma.$transaction(
         allStudents.map((student) =>
           prisma.record.upsert({
@@ -181,7 +209,7 @@ export const recordController = {
               amount: student.amount || student.amount_owing,
               hasPaid: student.hasPaid,
               isAbsent: absentStudents.some((s) => s.paidBy === student.paidBy),
-              submitedBy: id, // Assuming req.user is set by the authentication middleware
+              submitedBy: id,
             },
             create: {
               classId: parseInt(classId),
@@ -190,7 +218,7 @@ export const recordController = {
               amount: student.amount || student.amount_owing,
               hasPaid: student.hasPaid,
               isAbsent: absentStudents.some((s) => s.paidBy === student.paidBy),
-              submitedBy: id, // Assuming req.user is set by the authentication middleware
+              submitedBy: id,
               settingsAmount: student.amount || student.amount_owing,
             },
           })
@@ -203,7 +231,6 @@ export const recordController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
-
   updateStudentStatus: async (req: Request, res: Response) => {
     const { id } = req.params;
     const { hasPaid, isAbsent } = req.body;

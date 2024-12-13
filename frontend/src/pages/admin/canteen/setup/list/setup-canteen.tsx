@@ -4,7 +4,7 @@ import {
   useFetchClasses,
   useStudentRecordsByClassAndDate,
   useUpdateStudentStatus,
-  useSubmitTeacherRecord,
+  useSubmitAdminRecord,
   useGenerateStudentRecords,
 } from "@/services/api/queries";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export default function SetupCanteen() {
   const { mutate: generateRecords, isLoading: isGenerating } =
     useGenerateStudentRecords();
   const { mutate: submitRecord, isLoading: submittingRecord } =
-    useSubmitTeacherRecord();
+    useSubmitAdminRecord();
   const classSupervisorId = classes?.find(
     (classItem: Class) => classItem.id === parseInt(selectedClassId)
   )?.supervisorId;

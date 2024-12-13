@@ -42,7 +42,10 @@ type Student = {
   amount?: number;
   settingsAmount?: number;
   paidBy?: number;
-  class?: string;
+  class?: {
+    id: string;
+    name: string;
+  };
 };
 
 type RecordsAmount = {

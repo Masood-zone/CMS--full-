@@ -371,17 +371,11 @@ export const getStudentRecordsByClassAndDate = async (
 export const generateRecordForADate = async (
   classId: number,
   date: string,
-  adminId: number
+  id: number
 ) => {
   try {
     const response = await apiClient.post(
-      `/records/generate-daily?id=${adminId}`,
-      {
-        params: {
-          classId,
-          date,
-        },
-      }
+      `/records/generate-daily?date=${date}&classId=${classId}&id=${id}`
     );
     return response.data;
   } catch (error) {
