@@ -17,44 +17,52 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { useTeacherRecords } from "@/services/api/queries";
 import { CardsSkeleton } from "@/components/shared/page-loader/loaders";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useFetchSubmittedRecords } from "@/services/api/queries";
 
 export default function CanteenRecords() {
   const navigate = useNavigate();
   const [date, setDate] = useState<Date>(new Date());
   const formattedDate = date.toISOString().split("T")[0];
   const {
-    data: teacherRecords,
+    data: submittedRecords,
     isLoading,
     error,
-  } = useTeacherRecords(formattedDate);
+  } = useFetchSubmittedRecords(formattedDate);
 
-  const handleViewRecords = (teacherId: number) => {
-    navigate(`/admin/canteen-records/${teacherId}/records`, {
+  const handleViewRecords = (adminId: number) => {
+    navigate(`/admin/canteen-records/${adminId}/records`, {
       state: { date },
     });
   };
 
-  const calculateTotals = (record: TeacherRecord) => {
-    const totalPaid =
-      record.paidStudents?.reduce((sum, student) => sum + student.amount, 0) ||
-      0;
-    const totalUnpaid =
-      record.unpaidStudents?.reduce(
-        (sum, student) => sum + student.amount,
-        0
-      ) || 0;
-    const totalAbsent =
-      record.absentStudents?.reduce(
-        (sum, student) => sum + student.amount_owing,
-        0
-      ) || 0;
+  interface Record {
+    hasPaid: boolean;
+    amount: number;
+    isAbsent: boolean;
+  }
+
+  const calculateTotals = (records: Record[]) => {
+    const totalPaid = records.reduce(
+      (sum, record) => sum + (record.hasPaid ? record.amount : 0),
+      0
+    );
+    const totalUnpaid = records.reduce(
+      (sum, record) =>
+        sum + (!record.hasPaid && !record.isAbsent ? record.amount : 0),
+      0
+    );
+    const totalAbsent = records.reduce(
+      (sum, record) => sum + (record.isAbsent ? record.amount : 0),
+      0
+    );
     const totalAmount = totalPaid + totalUnpaid + totalAbsent;
-    const paidCount = record.paidStudents?.length || 0;
-    const unpaidCount = record.unpaidStudents?.length || 0;
-    const absentCount = record.absentStudents?.length || 0;
+    const paidCount = records.filter((record) => record.hasPaid).length;
+    const unpaidCount = records.filter(
+      (record) => !record.hasPaid && !record.isAbsent
+    ).length;
+    const absentCount = records.filter((record) => record.isAbsent).length;
     const totalStudents = paidCount + unpaidCount + absentCount;
 
     return {
@@ -101,48 +109,50 @@ export default function CanteenRecords() {
           {isLoading ? (
             <CardsSkeleton count={3} />
           ) : error ? (
-            <p>Error loading teacher records</p>
+            <p>Error loading submitted records</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {teacherRecords?.map((record: TeacherRecord) => {
-                const totals = calculateTotals(record);
-                return (
-                  <Card
-                    key={record.classId}
-                    className="hover:bg-accent/50 transition-colors"
-                  >
-                    <CardHeader>
-                      <CardTitle>{record?.teacher?.name}</CardTitle>
-                      <CardDescription className="text-lg">
-                        <span className="">Gross:</span>{" "}
-                        <span className="text-primary font-bold">
-                          ₵{totals.totalAmount.toFixed(2)}
-                        </span>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        Paid: {totals.paidCount} | Unpaid: {totals.unpaidCount}{" "}
-                        | Absent: {totals.absentCount}
-                      </p>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Total Students: {totals.totalStudents}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-between"
-                        onClick={() =>
-                          record?.teacher?.id !== undefined &&
-                          handleViewRecords(record.teacher.id)
-                        }
-                      >
-                        View Records
-                        <ChevronRightIcon className="h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {submittedRecords?.map(
+                (group: {
+                  admin: { id: number; name: string };
+                  records: Record[];
+                }) => {
+                  const totals = calculateTotals(group.records);
+                  return (
+                    <Card
+                      key={group.admin.id}
+                      className="hover:bg-accent/50 transition-colors"
+                    >
+                      <CardHeader>
+                        <CardTitle>{group.admin.name}</CardTitle>
+                        <CardDescription className="text-lg">
+                          <span className="">Gross:</span>{" "}
+                          <span className="text-primary font-bold">
+                            ₵{totals.totalAmount.toFixed(2)}
+                          </span>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Paid: {totals.paidCount} | Unpaid:{" "}
+                          {totals.unpaidCount} | Absent: {totals.absentCount}
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Total Students: {totals.totalStudents}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-between"
+                          onClick={() => handleViewRecords(group.admin.id)}
+                        >
+                          View Records
+                          <ChevronRightIcon className="h-4 w-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+              )}
             </div>
           )}
         </TabsContent>

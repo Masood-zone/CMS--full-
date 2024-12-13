@@ -196,6 +196,14 @@ interface SubmitTeacherRecordPayload {
   submittedBy: number;
 }
 
+interface StatisticsTableProps {
+  stats: {
+    totalPaid: number;
+    totalUnpaid: number;
+    totalOutstanding: number;
+  };
+}
+
 type Expense = {
   id: number;
   amount: number;

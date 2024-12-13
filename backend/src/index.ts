@@ -97,6 +97,21 @@ app.get("/records", authenticateToken, async (req, res, next) => {
     next(error);
   }
 });
+app.get("/records/submitted", authenticateToken, async (req, res, next) => {
+  try {
+    await recordController.getSubmittedRecordsByDate(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/records/details", authenticateToken, async (req, res, next) => {
+  try {
+    await recordController.getRecordDetails(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 app.post(
   "/records/generate-daily",
   authenticateToken,

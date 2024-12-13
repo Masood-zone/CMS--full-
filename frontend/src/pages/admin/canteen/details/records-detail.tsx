@@ -1,29 +1,76 @@
-import { useParams, useLocation } from "react-router-dom";
-import { format } from "date-fns";
-import { useFetchTeacherRecordsDetail } from "@/services/api/queries";
+import { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import { format, parseISO } from "date-fns";
+import { useFetchRecordsDetail } from "@/services/api/queries";
 import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/page-loader/loaders";
 import { PageHeading } from "@/components/typography/heading";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StatisticsTable } from "./statistics-table";
+
+interface Record {
+  id: number;
+  submitedAt: string;
+  student: {
+    id: number;
+    name: string;
+  };
+  class: {
+    id: number;
+    name: string;
+  };
+  amount: number;
+  hasPaid: boolean;
+  isAbsent: boolean;
+}
 
 export default function TeacherRecordsDetail() {
-  const { teacherId } = useParams<{ teacherId: string | undefined }>();
-  const location = useLocation();
-  const { date } = location.state as { date: Date };
-
+  const { teacherId } = useParams();
   const {
     data: records,
     isLoading,
     error,
-  } = useFetchTeacherRecordsDetail(date);
+  } = useFetchRecordsDetail(teacherId ? parseInt(teacherId) : 0);
+
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const groupedRecords = useMemo(() => {
+    if (!records) return {};
+    return records.reduce(
+      (acc: { [key: string]: Record[] }, record: Record) => {
+        const date = format(parseISO(record.submitedAt), "yyyy-MM-dd");
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(record);
+        return acc;
+      },
+      {}
+    );
+  }, [records]);
+
+  const availableDates = useMemo(() => {
+    return Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a));
+  }, [groupedRecords]);
+
+  const mostRecentDate = availableDates[0];
+
+  const currentDate = selectedDate || mostRecentDate;
 
   if (isLoading)
     return (
@@ -34,147 +81,97 @@ export default function TeacherRecordsDetail() {
     );
   if (error) return <p>Error loading teacher records</p>;
 
-  const transformedRecords = records
-    ?.filter(
-      (record: { teacher: { id: string } }) =>
-        teacherId !== undefined &&
-        parseInt(record.teacher.id) === parseInt(teacherId)
-    )
-    .flatMap(
-      (record: {
-        date: string;
-        classId: string;
-        paidStudents: Student[];
-        unpaidStudents: Student[];
-        absentStudents: Student[];
-      }) => {
-        const date = record.date;
-
-        const normalizeStudents = (students: Student[], status: string) =>
-          students.map((student: Student) => ({
-            id: student.id,
-            submitedAt: date,
-            student: { name: student?.name }, // Adjust if student names are fetched elsewhere
-            amount: student.amount,
-            hasPaid: status === "Paid",
-            isAbsent: status === "Absent",
-          }));
-
-        return [
-          ...normalizeStudents(record.paidStudents, "Paid"),
-          ...normalizeStudents(record.unpaidStudents, "Unpaid"),
-          ...normalizeStudents(record.absentStudents, "Absent"),
-        ];
-      }
-    );
-  const teacher = records?.find(
-    (record: { teacher: { id: string } }) =>
-      teacherId !== undefined &&
-      parseInt(record.teacher.id) === parseInt(teacherId)
-  )?.teacher;
-  const teacherClass = records?.find(
-    (record: { teacher: { id: string } }) =>
-      teacherId !== undefined &&
-      parseInt(record.teacher.id) === parseInt(teacherId)
-  )?.class;
-
   // Calculate statistics
-  const totalPaid = transformedRecords
-    .filter((record: CanteenRecord) => record.hasPaid)
-    .reduce((sum: number, record: CanteenRecord) => sum + record.amount, 0);
+  const calculateStats = (records: Record[]) => {
+    const totalPaid = records
+      .filter((record) => record.hasPaid)
+      .reduce((sum, record) => sum + record.amount, 0);
 
-  const totalUnpaid = transformedRecords
-    .filter((record: CanteenRecord) => !record.hasPaid && !record.isAbsent)
-    .reduce((sum: number, record: CanteenRecord) => sum + record.amount, 0);
+    const totalUnpaid = records
+      .filter((record) => !record.hasPaid && !record.isAbsent)
+      .reduce((sum, record) => sum + record.amount, 0);
 
-  const totalOutstanding = totalPaid + totalUnpaid;
+    const totalOutstanding = totalPaid + totalUnpaid;
+
+    return { totalPaid, totalUnpaid, totalOutstanding };
+  };
 
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Teacher Records</h1>
+        <PageHeading>Canteen Record Details</PageHeading>
         <Button onClick={() => window.history.back()}>Back to Summary</Button>
       </div>
-      <p className="mb-4">Records for {teacherClass?.name}</p>
-      <p>
-        <span className="font-bold">Teacher: </span>
-        {teacher?.name}
-      </p>
-      <p>
-        <span className="font-bold">Date: </span>
-        {format(new Date(date), "LLL dd, y")}
-      </p>
-      <Table className="mt-2 rounded-lg overflow-hidden">
-        <TableHeader className="bg-primary">
-          <TableRow>
-            <TableHead className="text-primary-foreground">Students</TableHead>
-            <TableHead className="text-primary-foreground">Amount</TableHead>
-            <TableHead className="text-primary-foreground">Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transformedRecords.map(
-            (record: {
-              id: number;
-              submitedAt: string;
-              student: { name: string };
-              class: { name: string };
-              amount: number;
-              hasPaid: boolean;
-              isAbsent: boolean;
-            }) => (
-              <TableRow key={record.id}>
-                <TableCell>{record.student.name}</TableCell>
-                <TableCell>₵{record.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  {record.hasPaid
-                    ? "Paid"
-                    : record.isAbsent
-                    ? "Absent"
-                    : "Unpaid"}
-                </TableCell>
+
+      <div className="mb-4 flex items-center space-x-3">
+        <h2 className="text-xl font-semibold mb-2">Select Date</h2>
+        <Select
+          value={currentDate}
+          onValueChange={(value) => setSelectedDate(value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select date" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableDates.map((date) => (
+              <SelectItem key={date} value={date}>
+                {format(parseISO(date), "MMMM d, yyyy")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {currentDate && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">
+            {format(parseISO(currentDate), "MMMM d, yyyy")}
+          </h2>
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Paid</TableHead>
+                <TableHead>Absent</TableHead>
+                <TableHead>Unpaid</TableHead>
               </TableRow>
-            )
-          )}
-        </TableBody>
-        {/* Footer for statistics */}
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={2} className="font-bold">
-              Outstanding Amount:
-            </TableCell>
-            <TableCell
-              colSpan={2}
-              className={`${
-                totalOutstanding === 0 ? "text-red-500" : "text-gray-700"
-              }`}
-            >
-              ₵{totalOutstanding.toFixed(2)}
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell colSpan={2} className="font-bold">
-              Total Paid:
-            </TableCell>
-            <TableCell colSpan={2} className="text-green-500">
-              ₵{totalPaid.toFixed(2)}
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell colSpan={2} className="font-bold">
-              Total Remaining:
-            </TableCell>
-            <TableCell
-              colSpan={2}
-              className={`${
-                totalUnpaid === 0 ? "text-red-500" : "text-gray-700"
-              }`}
-            >
-              ₵{totalUnpaid.toFixed(2)}
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {groupedRecords[currentDate].map((record: Record) => (
+                <TableRow key={record.id}>
+                  <TableCell>{record.student.name}</TableCell>
+                  <TableCell>₵{record.amount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Checkbox checked={record.hasPaid} disabled />
+                  </TableCell>
+                  <TableCell>
+                    <Checkbox checked={record.isAbsent} disabled />
+                  </TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={!record.hasPaid && !record.isAbsent}
+                      disabled
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div className="mt-4">
+            <h3 className="text-xl font-semibold mb-2">Daily Statistics</h3>
+            <StatisticsTable
+              stats={calculateStats(groupedRecords[currentDate])}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold mb-2">Overall Statistics</h3>
+        <StatisticsTable stats={calculateStats(records)} />
+      </div>
     </div>
   );
 }

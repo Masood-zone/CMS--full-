@@ -37,6 +37,7 @@ import {
   generateRecordForADate,
   fetchSupervisors,
   fetchSupervisor,
+  fetchRecordDetails,
 } from "@/services/api";
 import { apiClient } from "../root";
 import { useNavigate } from "react-router-dom";
@@ -357,6 +358,41 @@ export const useUpdateUser = () => {
 //     }
 //   );
 // };
+/*
+ * Query: Fetch all submitted records of a user by date.
+ */
+
+export const useFetchSubmittedRecords = (date: string) => {
+  return useQuery<[], Error>(
+    ["submittedRecords", date],
+    async () => {
+      const response = await apiClient.get(`/records/submitted?date=${date}`);
+      return response.data;
+    },
+    {
+      enabled: !!date,
+      onError: (error) => {
+        console.error("Error fetching submitted records:", error);
+        // Handle error (e.g., show a toast notification)
+      },
+    }
+  );
+};
+/*
+ * Query: Fetch a record detail
+ */
+export const useFetchRecordsDetail = (id: number) => {
+  const queryClient = useQueryClient();
+  return useQuery(["recordDetails", id], () => fetchRecordDetails(id), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["records"]);
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to fetch record details.");
+    },
+  });
+};
 
 /**
  * Mutation: Generate student records.

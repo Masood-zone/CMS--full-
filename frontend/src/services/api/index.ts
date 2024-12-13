@@ -367,6 +367,17 @@ export const getStudentRecordsByClassAndDate = async (
     throw error;
   }
 };
+//Query: Get record details by id
+export const fetchRecordDetails = async (id: number) => {
+  try {
+    const response = await apiClient.get(`/records/details?id=${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching record details:", error);
+    throw error;
+  }
+};
+
 //Mutation: Generate records for students based on classID and date
 export const generateRecordForADate = async (
   classId: number,

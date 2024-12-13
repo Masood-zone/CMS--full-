@@ -2,6 +2,17 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 const prisma = new PrismaClient();
 
+interface GroupedRecords {
+  [adminId: number]: {
+    admin: {
+      id: number;
+      name: string | null;
+      email: string;
+    };
+    records: any[];
+  };
+}
+
 export const recordController = {
   generateDailyRecords: async (req: Request, res: Response) => {
     const { date, classId, id } = req.query;
@@ -98,7 +109,112 @@ export const recordController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
+  getSubmittedRecordsByDate: async (req: Request, res: Response) => {
+    const { date } = req.query;
 
+    if (!date || typeof date !== "string") {
+      return res.status(400).json({ error: "Invalid date provided" });
+    }
+
+    const queryDate = new Date(date);
+    queryDate.setHours(0, 0, 0, 0);
+
+    try {
+      const records = await prisma.record.findMany({
+        where: {
+          submitedAt: {
+            gte: queryDate,
+            lt: new Date(queryDate.getTime() + 24 * 60 * 60 * 1000),
+          },
+        },
+        include: {
+          class: true,
+          student: true,
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: {
+          submitedAt: "asc",
+        },
+      });
+
+      const groupedRecords = records.reduce<GroupedRecords>((acc, record) => {
+        const adminId = record.submitedBy;
+        if (!acc[adminId]) {
+          acc[adminId] = {
+            admin: record.teacher,
+            records: [],
+          };
+        }
+        acc[adminId].records.push(record);
+        return acc;
+      }, {});
+
+      res.status(200).json(Object.values(groupedRecords));
+    } catch (error) {
+      console.error("Error fetching submitted records:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  },
+  getRecordDetails: async (req: Request, res: Response) => {
+    const { id } = req.query;
+    const adminId = id as string;
+
+    if (!adminId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const records = await prisma.record.findMany({
+        where: {
+          submitedBy: parseInt(adminId),
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          class: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          submitedAt: "desc",
+        },
+      });
+
+      if (records.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "No records found for this admin" });
+      }
+
+      const formattedRecords = records.map((record) => ({
+        id: record.id,
+        submitedAt: record.submitedAt.toISOString(),
+        student: record.student,
+        class: record.class,
+        amount: record.amount,
+        hasPaid: record.hasPaid,
+        isAbsent: record.isAbsent,
+      }));
+
+      res.status(200).json(formattedRecords);
+    } catch (error) {
+      console.error("Error fetching record details:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  },
   getStudentRecordsByClassAndDate: async (req: Request, res: Response) => {
     const classId = parseInt(req.params.classId);
     const date = new Date(req.query.date as string);
@@ -133,7 +249,6 @@ export const recordController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
-
   submitAdminRecord: async (req: Request, res: Response) => {
     const {
       classId,
