@@ -5,13 +5,15 @@ const prisma = new PrismaClient();
 
 export const prepaymentController = {
   createPrepayment: async (req: Request, res: Response) => {
-    const { amount, dateRange, numberOfDays, studentId, classId } = req.body;
+    const { amount, startDate, endDate, numberOfDays, studentId, classId } =
+      req.body;
 
     try {
       const prepayment = await prisma.prepayment.create({
         data: {
           amount: parseFloat(amount),
-          dateRange: new Date(dateRange),
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
           numberOfDays: parseInt(numberOfDays),
           studentId: parseInt(studentId),
           classId: parseInt(classId),
@@ -52,7 +54,11 @@ export const prepaymentController = {
     try {
       const prepayments = await prisma.prepayment.findMany({
         where: {
-          dateRange: {
+          startDate: {
+            gte: new Date(startDate as string),
+            lte: new Date(endDate as string),
+          },
+          endDate: {
             gte: new Date(startDate as string),
             lte: new Date(endDate as string),
           },
@@ -71,14 +77,15 @@ export const prepaymentController = {
 
   updatePrepayment: async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { amount, dateRange, numberOfDays } = req.body;
+    const { amount, startDate, endDate, numberOfDays } = req.body;
 
     try {
       const updatedPrepayment = await prisma.prepayment.update({
         where: { id: parseInt(id) },
         data: {
           amount: parseFloat(amount),
-          dateRange: new Date(dateRange),
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
           numberOfDays: parseInt(numberOfDays),
         },
       });

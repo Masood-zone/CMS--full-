@@ -38,6 +38,9 @@ import {
   fetchSupervisors,
   fetchSupervisor,
   fetchRecordDetails,
+  fetchPrepaymentsByClass,
+  createPrepayment,
+  updatePrepayment,
 } from "@/services/api";
 import { apiClient } from "../root";
 import { useNavigate } from "react-router-dom";
@@ -410,6 +413,60 @@ export const useGenerateStudentRecords = () => {
       onError: (error) => {
         console.error(error);
         toast.error("Failed to generate records.");
+      },
+    }
+  );
+};
+
+/*
+ * Query: Fetch all prepayments
+ */
+export const useFetchPrepayments = (classId: number) => {
+  return useQuery(
+    ["prepayments", classId],
+    () => fetchPrepaymentsByClass(classId),
+    {
+      onError: (error) => {
+        console.error(error);
+        toast.error("Failed to fetch record details.");
+      },
+    }
+  );
+};
+/**
+ * Mutation: Create a prepayment.
+ */
+export const useCreatePrepayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation((data: CreatePrepayment) => createPrepayment(data), {
+    onSuccess: () => {
+      toast.success("Prepayment created successfully!");
+      queryClient.invalidateQueries(["records"]);
+      queryClient.invalidateQueries(["prepayments"]);
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to create prepayment.");
+    },
+  });
+};
+
+/**
+ * Mutation: Update a prepayments.
+ */
+export const useUpdatePrepayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    (data: UpdatePrepayment) => updatePrepayment(data.id, data),
+    {
+      onSuccess: () => {
+        toast.success("Prepayment updated successfully!");
+        queryClient.invalidateQueries(["records"]);
+        queryClient.invalidateQueries(["prepayments"]);
+      },
+      onError: (error) => {
+        console.error(error);
+        toast.error("Failed to update prepayment.");
       },
     }
   );

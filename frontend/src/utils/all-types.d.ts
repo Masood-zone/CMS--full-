@@ -204,6 +204,22 @@ interface StatisticsTableProps {
   };
 }
 
+interface Prepayments {
+  id: number;
+  amount: number;
+  startDate: Date;
+  endDate: Date;
+  numberOfDays: number;
+  studentId: number;
+  classId: number;
+  student: {
+    name: string;
+  };
+}
+type Prepayment = Omit<Prepayments, "">;
+type CreatePrepayment = Omit<Prepayments, "id", "student">;
+type UpdatePrepayment = Partial<Prepayments> & { id: number };
+
 type Expense = {
   id: number;
   amount: number;

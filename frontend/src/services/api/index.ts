@@ -405,6 +405,47 @@ export const submitTeacherRecord = async (data: SubmitTeacherRecordPayload) => {
   }
 };
 
+// Mutation: Create Prepayments
+export const createPrepayment = async (data: CreatePrepayment) => {
+  try {
+    const response = await apiClient.post("/prepayments", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating prepayment:", error);
+    throw error;
+  }
+};
+// Query: Fetch a class prepayment
+export const fetchPrepaymentsByClass = async (classId: number) => {
+  try {
+    const response = await apiClient.get(`/prepayments?classId=${classId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching prepayments:", error);
+    throw error;
+  }
+};
+// Mutation: Update a prepayment
+export const updatePrepayment = async (id: number, data: UpdatePrepayment) => {
+  try {
+    const response = await apiClient.put(`/prepayments/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating prepayment:", error);
+    throw error;
+  }
+};
+//Mutation: Delete Prepayment
+export const deletePrepayment = async (id: number) => {
+  try {
+    const response = await apiClient.delete(`/prepayments/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting prepayment:", error);
+    throw error;
+  }
+};
+
 /**
  * Update student status
  * PUT /records/:id/status

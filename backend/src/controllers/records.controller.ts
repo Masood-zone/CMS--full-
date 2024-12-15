@@ -23,7 +23,7 @@ export const recordController = {
       });
     }
 
-    const recordDate = new Date(date as unknown as string);
+    const recordDate = new Date(date as string);
     recordDate.setHours(0, 0, 0, 0);
 
     if (isNaN(recordDate.getTime())) {
@@ -48,23 +48,55 @@ export const recordController = {
       const createdRecords = [];
       const skippedRecords = [];
 
+      // Fetch active prepayments for the given date
+      const activePrepayments = await prisma.prepayment.findMany({
+        where: {
+          startDate: { lte: recordDate },
+          endDate: { gte: recordDate },
+        },
+        include: { student: true },
+      });
+
       for (const classItem of classes) {
         for (const student of classItem.students) {
           try {
-            const record = await prisma.record.create({
-              data: {
-                classId: classItem.id,
-                payedBy: student.id,
-                submitedAt: recordDate,
-                amount: settingsAmount,
-                hasPaid: false,
-                isPrepaid: false,
-                isAbsent: false,
-                settingsAmount,
-                submitedBy: parseInt(id as string),
-              },
-            });
-            createdRecords.push(record);
+            const prepayment = activePrepayments.find(
+              (p) => p.studentId === student.id
+            );
+
+            if (prepayment) {
+              // Create a prepaid record
+              const record = await prisma.record.create({
+                data: {
+                  classId: classItem.id,
+                  payedBy: student.id,
+                  submitedAt: recordDate,
+                  amount: prepayment.amount / prepayment.numberOfDays,
+                  hasPaid: true,
+                  isPrepaid: true,
+                  isAbsent: false,
+                  settingsAmount,
+                  submitedBy: parseInt(id as string),
+                },
+              });
+              createdRecords.push(record);
+            } else {
+              // Create a regular record
+              const record = await prisma.record.create({
+                data: {
+                  classId: classItem.id,
+                  payedBy: student.id,
+                  submitedAt: recordDate,
+                  amount: settingsAmount,
+                  hasPaid: false,
+                  isPrepaid: false,
+                  isAbsent: false,
+                  settingsAmount,
+                  submitedBy: parseInt(id as string),
+                },
+              });
+              createdRecords.push(record);
+            }
           } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
               if (error.code === "P2002") {
@@ -83,7 +115,7 @@ export const recordController = {
           }
         }
       }
-      await recordController.handlePrepayments();
+
       res.status(200).json({
         message: "Daily records generated successfully",
         createdRecords: createdRecords.length,
@@ -92,47 +124,6 @@ export const recordController = {
     } catch (error) {
       console.error("Error generating daily records:", error);
       res.status(500).json({ error: "Internal Server Error" });
-    }
-  },
-  handlePrepayments: async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const prepayments = await prisma.prepayment.findMany({
-      where: {
-        dateRange: {
-          lte: today,
-        },
-      },
-      include: {
-        student: true,
-        class: true,
-      },
-    });
-
-    for (const prepayment of prepayments) {
-      const endDate = new Date(prepayment.dateRange);
-      endDate.setDate(endDate.getDate() + prepayment.numberOfDays);
-
-      if (today <= endDate) {
-        const dayOfWeek = today.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          // Skip weekends
-          await prisma.record.create({
-            data: {
-              amount: prepayment.amount / prepayment.numberOfDays,
-              submitedAt: today,
-              submitedBy: prepayment.class.supervisorId || 0,
-              payedBy: prepayment.studentId,
-              isPrepaid: true,
-              hasPaid: true,
-              isAbsent: false,
-              settingsAmount: prepayment.amount / prepayment.numberOfDays,
-              classId: prepayment.classId,
-            },
-          });
-        }
-      }
     }
   },
   getAllRecords: async (req: Request, res: Response) => {
@@ -350,10 +341,27 @@ export const recordController = {
           .json({ error: "One or more students not found" });
       }
 
+      // Fetch active prepayments for the given date
+      const activePrepayments = await prisma.prepayment.findMany({
+        where: {
+          startDate: { lte: startOfDay },
+          endDate: { gte: startOfDay },
+          studentId: { in: payedByIds },
+        },
+      });
+
       // Perform upsert for records
       const updatedRecords = await prisma.$transaction(
-        allStudents.map((student) =>
-          prisma.record.upsert({
+        allStudents.map((student) => {
+          const prepayment = activePrepayments.find(
+            (p) => p.studentId === parseInt(student.paidBy)
+          );
+          const isPrepaid = !!prepayment;
+          const amount = isPrepaid
+            ? prepayment!.amount / prepayment!.numberOfDays
+            : student.amount || student.amount_owing;
+
+          return prisma.record.upsert({
             where: {
               payedBy_submitedAt: {
                 payedBy: parseInt(student.paidBy),
@@ -361,23 +369,25 @@ export const recordController = {
               },
             },
             update: {
-              amount: student.amount || student.amount_owing,
-              hasPaid: student.hasPaid,
+              amount,
+              hasPaid: student.hasPaid || isPrepaid,
               isAbsent: absentStudents.some((s) => s.paidBy === student.paidBy),
               submitedBy: id,
+              isPrepaid,
             },
             create: {
               classId: parseInt(classId),
               payedBy: parseInt(student.paidBy),
               submitedAt: startOfDay,
-              amount: student.amount || student.amount_owing,
-              hasPaid: student.hasPaid,
+              amount,
+              hasPaid: student.hasPaid || isPrepaid,
               isAbsent: absentStudents.some((s) => s.paidBy === student.paidBy),
               submitedBy: id,
               settingsAmount: student.amount || student.amount_owing,
+              isPrepaid,
             },
-          })
-        )
+          });
+        })
       );
 
       res.status(201).json(updatedRecords);

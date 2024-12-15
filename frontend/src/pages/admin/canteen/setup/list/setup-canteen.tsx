@@ -28,6 +28,8 @@ import { toast } from "sonner";
 import { TableSkeleton } from "@/components/shared/page-loader/loaders";
 import { columns } from "./columns";
 import { useAuthStore } from "@/store/authStore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PrepaymentTable } from "../prepayments/list";
 
 export default function SetupCanteen() {
   const { user } = useAuthStore();
@@ -36,6 +38,7 @@ export default function SetupCanteen() {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
 
   const [records, setRecords] = useState<CanteenRecord[]>([]);
+  const [activeTab, setActiveTab] = useState("daily");
   const formattedDate = selectedDate.toISOString().split("T")[0];
   const { data: classes, isLoading: classesLoading } = useFetchClasses();
   const { data: studentRecords, isLoading: recordsLoading } =
@@ -44,6 +47,7 @@ export default function SetupCanteen() {
     useUpdateStudentStatus();
   const { mutate: generateRecords, isLoading: isGenerating } =
     useGenerateStudentRecords();
+
   const { mutate: submitRecord, isLoading: submittingRecord } =
     useSubmitAdminRecord();
   const classSupervisorId = classes?.find(
@@ -149,57 +153,89 @@ export default function SetupCanteen() {
           {submittingRecord ? "Submitting..." : "Submit Canteen Records"}
         </Button>
       </div>
-      <div className="flex items-center space-x-4 mb-6">
-        <Select onValueChange={setSelectedClassId} value={selectedClassId}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select a class" />
-          </SelectTrigger>
-          <SelectContent>
-            {classes?.map((classItem: Class) => (
-              <SelectItem key={classItem.id} value={classItem.id.toString()}>
-                {classItem.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "w-[240px] justify-start text-left font-normal",
-                !selectedDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {selectedDate ? (
-                format(selectedDate, "PPP")
-              ) : (
-                <span>Pick a date</span>
-              )}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="daily">Daily</TabsTrigger>
+          <TabsTrigger value="prepayments">Prepayments</TabsTrigger>
+        </TabsList>
+        <TabsContent value="daily">
+          <div className="flex items-center space-x-4 mb-6">
+            <Select onValueChange={setSelectedClassId} value={selectedClassId}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select a class" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes?.map((classItem: Class) => (
+                  <SelectItem
+                    key={classItem.id}
+                    value={classItem.id.toString()}
+                  >
+                    {classItem.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? (
+                    format(selectedDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Button onClick={handleGenerateRecords} disabled={isGenerating}>
+              {isGenerating ? "Generating..." : "Generate Records"}
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              initialFocus
+          </div>
+          {classesLoading || recordsLoading ? (
+            <TableSkeleton />
+          ) : (
+            <CanteenTable
+              columns={columns(handleUpdateStatus, updatingLoader)}
+              data={records}
             />
-          </PopoverContent>
-        </Popover>
-        <Button onClick={handleGenerateRecords} disabled={isGenerating}>
-          {isGenerating ? "Generating..." : "Generate Records"}
-        </Button>
-      </div>
-      {classesLoading || recordsLoading ? (
-        <TableSkeleton />
-      ) : (
-        <CanteenTable
-          columns={columns(handleUpdateStatus, updatingLoader)}
-          data={records}
-        />
-      )}
+          )}
+        </TabsContent>
+        <TabsContent value="prepayments">
+          <div className="mb-6">
+            <Select onValueChange={setSelectedClassId} value={selectedClassId}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select a class" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes?.map((classItem: Class) => (
+                  <SelectItem
+                    key={classItem.id}
+                    value={classItem.id.toString()}
+                  >
+                    {classItem.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <PrepaymentTable classId={selectedClassId} />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }

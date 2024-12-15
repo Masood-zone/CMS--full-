@@ -90,7 +90,8 @@ model Reference {
 model Prepayment {
   id           Int      @id @default(autoincrement())
   amount       Float
-  dateRange    DateTime
+  startDate    DateTime @default(now())
+  endDate      DateTime @default(now())
   numberOfDays Int
   studentId    Int
   classId      Int
@@ -99,3 +100,4 @@ model Prepayment {
   student      Student  @relation(fields: [studentId], references: [id])
   class        Class    @relation(fields: [classId], references: [id])
 }
+
