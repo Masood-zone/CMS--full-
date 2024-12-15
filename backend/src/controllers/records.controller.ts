@@ -83,7 +83,7 @@ export const recordController = {
           }
         }
       }
-
+      await recordController.handlePrepayments();
       res.status(200).json({
         message: "Daily records generated successfully",
         createdRecords: createdRecords.length,
@@ -94,7 +94,47 @@ export const recordController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
+  handlePrepayments: async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    const prepayments = await prisma.prepayment.findMany({
+      where: {
+        dateRange: {
+          lte: today,
+        },
+      },
+      include: {
+        student: true,
+        class: true,
+      },
+    });
+
+    for (const prepayment of prepayments) {
+      const endDate = new Date(prepayment.dateRange);
+      endDate.setDate(endDate.getDate() + prepayment.numberOfDays);
+
+      if (today <= endDate) {
+        const dayOfWeek = today.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          // Skip weekends
+          await prisma.record.create({
+            data: {
+              amount: prepayment.amount / prepayment.numberOfDays,
+              submitedAt: today,
+              submitedBy: prepayment.class.supervisorId || 0,
+              payedBy: prepayment.studentId,
+              isPrepaid: true,
+              hasPaid: true,
+              isAbsent: false,
+              settingsAmount: prepayment.amount / prepayment.numberOfDays,
+              classId: prepayment.classId,
+            },
+          });
+        }
+      }
+    }
+  },
   getAllRecords: async (req: Request, res: Response) => {
     try {
       const records = await prisma.record.findMany({

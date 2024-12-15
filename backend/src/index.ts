@@ -5,6 +5,7 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 
 import { recordController } from "./controllers/records.controller";
+import { prepaymentController } from "./controllers/prepayment.controller";
 import { classController } from "./controllers/class.controller";
 import { userController } from "./controllers/users.controller";
 import { studentController } from "./controllers/student.controller";
@@ -260,6 +261,39 @@ app.get(
       next(error);
     }
   }
+);
+
+// Prepayment routes
+app.post(
+  "/prepayments",
+  authenticateToken,
+  prepaymentController.createPrepayment
+);
+app.get(
+  "/prepayments",
+  authenticateToken,
+  prepaymentController.getAllPrepayments
+);
+app.get(
+  "/prepayments/date-range",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      await prepaymentController.getAllPrepaymentsWithinADate(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+app.put(
+  "/prepayments/:id",
+  authenticateToken,
+  prepaymentController.updatePrepayment
+);
+app.delete(
+  "/prepayments/:id",
+  authenticateToken,
+  prepaymentController.deletePrepayment
 );
 
 const PORT = process.env.PORT || 3400;

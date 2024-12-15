@@ -34,6 +34,7 @@ model Class {
   records Record[]
   students     Student[]
   supervisor   User?     @relation(fields: [supervisorId], references: [id])
+    prepayments  Prepayment[]
 }
 
 model Student {
@@ -45,6 +46,7 @@ model Student {
   classId     Int?
   class       Class?  @relation(fields: [classId], references: [id])
   records      Record[]
+    prepayments  Prepayment[]
 }
 
 model Record {
@@ -83,4 +85,17 @@ model Reference {
   name        String
   description String?
   expenses    Expense[]
+}
+
+model Prepayment {
+  id           Int      @id @default(autoincrement())
+  amount       Float
+  dateRange    DateTime
+  numberOfDays Int
+  studentId    Int
+  classId      Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  student      Student  @relation(fields: [studentId], references: [id])
+  class        Class    @relation(fields: [classId], references: [id])
 }
