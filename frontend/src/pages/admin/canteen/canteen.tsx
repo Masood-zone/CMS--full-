@@ -197,7 +197,7 @@ export default function CanteenRecords() {
                       Date Range: {format(new Date(prepayment.startDate), "PP")}{" "}
                       - {format(new Date(prepayment.endDate), "PP")}
                     </p>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       className="w-full justify-between"
                       onClick={() =>
@@ -206,7 +206,7 @@ export default function CanteenRecords() {
                     >
                       View Records
                       <ChevronRightIcon className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </CardContent>
                 </Card>
               ))}
