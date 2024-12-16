@@ -119,11 +119,17 @@ type StudentRecord = {
   isPrepaid: boolean;
   hasPaid: boolean;
   submitedBy: number;
+  submitedAt?: number;
   classId: number;
   settingsAmount?: number;
   isAbsent: boolean;
   date?: string;
 };
+
+interface StudentRecordsTableProps {
+  records: StudentRecord[];
+  studentName: string;
+}
 
 interface AdminAnalytics {
   totalTeachers: number;
