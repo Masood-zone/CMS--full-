@@ -6,17 +6,16 @@ import {
   useFetchStudentsByClass,
   useFetchRecordsAmount,
   useCreatePrepayment,
-  useFetchPrepayments,
+  useFetchPrepaymentsByClass,
   useUpdatePrepayment,
   useDeleteResource,
 } from "@/services/api/queries";
 
 export function usePrepaymentTable(classId: string) {
-  const { data: prepayments, isLoading } = useFetchPrepayments(
+  const { data: prepayments, isLoading } = useFetchPrepaymentsByClass(
     parseInt(classId)
   );
-  const { mutate: createPrepayment, isLoading: prepaymentLoading } =
-    useCreatePrepayment();
+
   const { mutate: updatePrepayment } = useUpdatePrepayment();
   const { mutate: deletePrepayment } = useDeleteResource(
     "prepayments",
@@ -41,41 +40,17 @@ export function usePrepaymentTable(classId: string) {
     }
   };
 
-  const handlePrepaymentSubmit = async (data: CreatePrepayment) => {
-    if (!data.dateRange.from || !data.dateRange.to) {
-      toast.error("Please select a valid date range");
-      return;
-    }
-
-    const prepaymentData = {
-      ...data,
-      startDate: data.dateRange.from.toISOString(),
-      endDate: data.dateRange.to.toISOString(),
-      numberOfDays: data.numberOfDays,
-      amount: data.expectedAmount,
-      classId,
-    };
-
-    try {
-      await createPrepayment(prepaymentData);
-      toast.success("Prepayment created successfully");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to create prepayment");
-    }
-  };
-
   return {
     prepayments,
     isLoading,
-    prepaymentLoading,
     handleUpdate,
     handleDelete,
-    handlePrepaymentSubmit,
   };
 }
 
 export function usePrepaymentForm(classId: string) {
+  const { mutate: createPrepayment, isLoading: prepaymentLoading } =
+    useCreatePrepayment();
   const { data: students } = useFetchStudentsByClass(parseInt(classId));
   const {
     data: price,
@@ -83,7 +58,7 @@ export function usePrepaymentForm(classId: string) {
     error: canteenPriceError,
   } = useFetchRecordsAmount();
 
-  const { control, handleSubmit, reset, watch } = useForm({
+  const { control, handleSubmit, reset, watch } = useForm<CreatePrepayment>({
     defaultValues: {
       studentId: "",
       dateRange: { from: undefined, to: undefined } as DateRange,
@@ -107,6 +82,8 @@ export function usePrepaymentForm(classId: string) {
     canteenPriceLoading,
     canteenPriceError,
     control,
+    createPrepayment,
+    prepaymentLoading,
     handleSubmit,
     reset,
     watch,

@@ -21,8 +21,8 @@ import { CardsSkeleton } from "@/components/shared/page-loader/loaders";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useFetchSubmittedRecords,
-  useFetchPrepayments,
   useFetchUnpaidStudents,
+  useFetchPrepayments,
 } from "@/services/api/queries";
 
 export default function CanteenRecords() {
@@ -41,7 +41,7 @@ export default function CanteenRecords() {
   } = useFetchUnpaidStudents();
 
   const { data: prepayments, isLoading: prepaymentsLoading } =
-    useFetchPrepayments(0); // Fetch all prepayments
+    useFetchPrepayments(); // Fetch all prepayments
 
   const handleViewRecords = (adminId: number) => {
     navigate(`/admin/canteen-records/${adminId}/records`, {

@@ -22,7 +22,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PrepaymentTable } from "../prepayments/list";
 import { useCanteenSetup } from "@/hooks/use-canteen.setup";
 import { PrepaymentForm } from "../prepayments/forms/create-prepayment-form";
-import { usePrepaymentTable } from "@/hooks/use-prepayments";
 
 export default function SetupCanteen() {
   const {
@@ -43,8 +42,6 @@ export default function SetupCanteen() {
     handleGenerateRecords,
     handleSubmitCanteen,
   } = useCanteenSetup();
-
-  const { handlePrepaymentSubmit } = usePrepaymentTable(selectedClassId);
 
   return (
     <section className="container mx-auto py-10 px-5">
@@ -142,10 +139,7 @@ export default function SetupCanteen() {
               </SelectContent>
             </Select>
             <div>
-              <PrepaymentForm
-                classId={selectedClassId}
-                onSubmit={handlePrepaymentSubmit}
-              />
+              <PrepaymentForm classId={selectedClassId} />
             </div>
           </div>
           <PrepaymentTable classId={selectedClassId} />

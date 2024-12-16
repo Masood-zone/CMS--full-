@@ -41,6 +41,7 @@ import {
   fetchPrepaymentsByClass,
   createPrepayment,
   updatePrepayment,
+  fetchPrepayments,
 } from "@/services/api";
 import { apiClient } from "../root";
 import { useNavigate } from "react-router-dom";
@@ -430,7 +431,18 @@ export const useGenerateStudentRecords = () => {
 /*
  * Query: Fetch all prepayments
  */
-export const useFetchPrepayments = (classId: number) => {
+export const useFetchPrepayments = () => {
+  return useQuery(["prepayments"], () => fetchPrepayments(), {
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to fetch record details.");
+    },
+  });
+};
+/*
+ * Query: Fetch all prepayments by class
+ */
+export const useFetchPrepaymentsByClass = (classId: number) => {
   return useQuery(
     ["prepayments", classId],
     () => fetchPrepaymentsByClass(classId),

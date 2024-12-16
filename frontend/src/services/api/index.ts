@@ -415,10 +415,20 @@ export const createPrepayment = async (data: CreatePrepayment) => {
     throw error;
   }
 };
+// Query: Fetch prepayments
+export const fetchPrepayments = async () => {
+  try {
+    const response = await apiClient.get("/prepayments");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching prepayments:", error);
+    throw error;
+  }
+};
 // Query: Fetch a class prepayment
 export const fetchPrepaymentsByClass = async (classId: number) => {
   try {
-    const response = await apiClient.get(`/prepayments?classId=${classId}`);
+    const response = await apiClient.get(`/prepayments/${classId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching prepayments:", error);
@@ -432,16 +442,6 @@ export const updatePrepayment = async (id: number, data: UpdatePrepayment) => {
     return response.data;
   } catch (error) {
     console.error("Error updating prepayment:", error);
-    throw error;
-  }
-};
-//Mutation: Delete Prepayment
-export const deletePrepayment = async (id: number) => {
-  try {
-    const response = await apiClient.delete(`/prepayments/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting prepayment:", error);
     throw error;
   }
 };

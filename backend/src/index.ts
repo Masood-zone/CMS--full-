@@ -276,6 +276,13 @@ app.post(
   authenticateToken,
   prepaymentController.createPrepayment
 );
+app.get("/prepayments/:id", authenticateToken, async (req, res, next) => {
+  try {
+    await prepaymentController.getAllPrepaymentsByClass(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 app.get(
   "/prepayments",
   authenticateToken,

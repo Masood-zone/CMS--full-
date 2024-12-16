@@ -26,31 +26,54 @@ import { Controller } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { usePrepaymentForm } from "@/hooks/use-prepayments";
-import { DateRange } from "react-day-picker";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface PrepaymentFormProps {
   classId: string;
-  onSubmit: (data: { studentId: string; dateRange: DateRange }) => void;
 }
 
-export function PrepaymentForm({ classId, onSubmit }: PrepaymentFormProps) {
+export function PrepaymentForm({ classId }: PrepaymentFormProps) {
   const {
     students,
     price,
     canteenPriceLoading,
     canteenPriceError,
     control,
+    createPrepayment,
     handleSubmit,
     numberOfDays,
     expectedAmount,
   } = usePrepaymentForm(classId);
-
+  const [isOpen, setIsOpen] = useState(false);
   const canteenPrice = price?.setting?.value
     ? parseFloat(price.setting.value)
     : 0;
+  const handlePrepaymentSubmit = async (data: CreatePrepayment) => {
+    if (!data.dateRange.from || !data.dateRange.to) {
+      toast.error("Please select a valid date range");
+      return;
+    }
+
+    const prepaymentData = {
+      ...data,
+      startDate: data.dateRange.from.toISOString(),
+      endDate: data.dateRange.to.toISOString(),
+      numberOfDays: numberOfDays,
+      amount: expectedAmount,
+      classId,
+    };
+
+    try {
+      await createPrepayment(prepaymentData);
+      setIsOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="mt-4">Setup Prepaid</Button>
       </DialogTrigger>
@@ -58,7 +81,10 @@ export function PrepaymentForm({ classId, onSubmit }: PrepaymentFormProps) {
         <DialogHeader>
           <DialogTitle>Record Prepayment</DialogTitle>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <form
+          className="space-y-4"
+          onSubmit={handleSubmit(handlePrepaymentSubmit)}
+        >
           <div className="flex items-center justify-between w-full">
             <Label htmlFor="canteenPrice">Canteen Price</Label>
             <div>

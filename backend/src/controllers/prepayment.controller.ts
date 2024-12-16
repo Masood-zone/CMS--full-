@@ -42,6 +42,32 @@ export const prepaymentController = {
     }
   },
 
+  getAllPrepaymentsByClass: async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const classId = id;
+
+    // Validate classId
+    if (!classId) {
+      return res.status(400).json({ error: `Class ID is required ${id}` });
+    }
+
+    try {
+      const prepayments = await prisma.prepayment.findMany({
+        where: {
+          classId: parseInt(classId.toString()),
+        },
+        include: {
+          student: true,
+          class: true,
+        },
+      });
+      res.status(200).json(prepayments);
+    } catch (error) {
+      console.error("Error fetching prepayments by classId:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  },
+
   getAllPrepaymentsWithinADate: async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
