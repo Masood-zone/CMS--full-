@@ -19,7 +19,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import { CardsSkeleton } from "@/components/shared/page-loader/loaders";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFetchSubmittedRecords } from "@/services/api/queries";
+import {
+  useFetchSubmittedRecords,
+  useFetchPrepayments,
+} from "@/services/api/queries";
 
 export default function CanteenRecords() {
   const navigate = useNavigate();
@@ -30,6 +33,8 @@ export default function CanteenRecords() {
     isLoading,
     error,
   } = useFetchSubmittedRecords(formattedDate);
+  const { data: prepayments, isLoading: prepaymentsLoading } =
+    useFetchPrepayments(0); // Fetch all prepayments
 
   const handleViewRecords = (adminId: number) => {
     navigate(`/admin/canteen-records/${adminId}/records`, {
@@ -101,11 +106,13 @@ export default function CanteenRecords() {
           </PopoverContent>
         </Popover>
       </div>
-      <Tabs defaultValue="submitted-records">
+      <Tabs defaultValue="all">
         <TabsList>
-          <TabsTrigger value="submitted-records">All Records</TabsTrigger>
+          <TabsTrigger value="all">All Records</TabsTrigger>
+          <TabsTrigger value="prepayments">Prepayments</TabsTrigger>
+          <TabsTrigger value="owings">Owings</TabsTrigger>
         </TabsList>
-        <TabsContent value="submitted-records">
+        <TabsContent value="all">
           {isLoading ? (
             <CardsSkeleton count={3} />
           ) : error ? (
@@ -155,6 +162,53 @@ export default function CanteenRecords() {
               )}
             </div>
           )}
+        </TabsContent>
+        <TabsContent value="prepayments">
+          {prepaymentsLoading ? (
+            <CardsSkeleton count={3} />
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {prepayments?.map((prepayment: Prepayment) => (
+                <Card
+                  key={prepayment.id}
+                  className="hover:bg-accent/50 transition-colors"
+                >
+                  <CardHeader>
+                    <CardTitle>{prepayment.student.name}</CardTitle>
+                    <CardDescription className="text-lg">
+                      <span className="">Amount:</span>{" "}
+                      <span className="text-primary font-bold">
+                        ₵{prepayment.amount.toFixed(2)}
+                      </span>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Number of Days: {prepayment.numberOfDays}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Date Range: {format(new Date(prepayment.startDate), "PP")}{" "}
+                      - {format(new Date(prepayment.endDate), "PP")}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-between"
+                      onClick={() =>
+                        navigate(`/admin/prepayments/${prepayment.id}`)
+                      }
+                    >
+                      View Records
+                      <ChevronRightIcon className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="owings">
+          {/* Implement owings tab content here */}
+          <p>Owings tab content (to be implemented)</p>
         </TabsContent>
       </Tabs>
     </div>

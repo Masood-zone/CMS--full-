@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
+import { UpdatePrepaymentModal } from "./forms/update-prepayment-form";
 
 export const columns = (
   handleUpdate: (prepayment: Prepayment) => void,
@@ -30,16 +31,22 @@ export const columns = (
   },
   {
     id: "actions",
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <Button onClick={() => handleUpdate(row.original)}>Update</Button>
-        <Button
-          variant="destructive"
-          onClick={() => handleDelete(row.original.id)}
-        >
-          Delete
-        </Button>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const prepayment = row.original;
+      return (
+        <div className="flex space-x-2">
+          <UpdatePrepaymentModal
+            prepayment={prepayment}
+            onUpdate={handleUpdate}
+          />
+          <Button
+            variant="destructive"
+            onClick={() => handleDelete(row.original.id)}
+          >
+            Delete
+          </Button>
+        </div>
+      );
+    },
   },
 ];

@@ -26,10 +26,8 @@ export function usePrepaymentTable(classId: string) {
   const handleUpdate = async (data: Prepayment) => {
     try {
       await updatePrepayment(data);
-      toast.success("Prepayment updated successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update prepayment");
     }
   };
 

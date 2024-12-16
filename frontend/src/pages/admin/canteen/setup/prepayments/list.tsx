@@ -7,6 +7,7 @@ export function PrepaymentTable({ classId }: { classId: string }) {
   const { prepayments, isLoading, handleUpdate, handleDelete } =
     usePrepaymentTable(classId);
 
+  if (!classId) return <TableSkeleton />;
   if (isLoading) return <TableSkeleton />;
 
   return (
