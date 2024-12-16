@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useFetchSubmittedRecords,
   useFetchPrepayments,
+  useFetchUnpaidStudents,
 } from "@/services/api/queries";
 
 export default function CanteenRecords() {
@@ -33,6 +34,12 @@ export default function CanteenRecords() {
     isLoading,
     error,
   } = useFetchSubmittedRecords(formattedDate);
+  const {
+    data: owingStudents,
+    isLoading: owingStudentsLoading,
+    error: owingStudentsError,
+  } = useFetchUnpaidStudents();
+
   const { data: prepayments, isLoading: prepaymentsLoading } =
     useFetchPrepayments(0); // Fetch all prepayments
 
@@ -207,8 +214,56 @@ export default function CanteenRecords() {
           )}
         </TabsContent>
         <TabsContent value="owings">
-          {/* Implement owings tab content here */}
-          <p>Owings tab content (to be implemented)</p>
+          {owingStudentsLoading ? (
+            <CardsSkeleton count={3} />
+          ) : owingStudentsError ? (
+            <p>Error loading owings records</p>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {owingStudents?.map(
+                (student: {
+                  id: number;
+                  student: { id: number; name: string };
+                  amount: number;
+                  class: { name: string };
+                  submitedAt: string;
+                }) => (
+                  <Card
+                    key={student.id}
+                    className="hover:bg-accent/50 transition-colors"
+                  >
+                    <CardHeader>
+                      <CardTitle>{student.student.name}</CardTitle>
+                      <CardDescription className="text-lg">
+                        <span className="">Amount Owing:</span>{" "}
+                        <span className="text-destructive font-bold">
+                          ₵{student.amount.toFixed(2)}
+                        </span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Class: {student.class.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Date: {format(new Date(student.submitedAt), "PPP")}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-between mt-2"
+                        onClick={() =>
+                          navigate(`/admin/students/${student.student.id}`)
+                        }
+                      >
+                        View Student Details
+                        <ChevronRightIcon className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              )}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

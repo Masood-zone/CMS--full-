@@ -396,6 +396,29 @@ export const recordController = {
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
+
+  getUnpaidStudents: async (req: Request, res: Response) => {
+    try {
+      const unpaidStudents = await prisma.record.findMany({
+        where: {
+          hasPaid: false,
+          isAbsent: false,
+        },
+        include: {
+          student: true,
+          class: true,
+        },
+        orderBy: {
+          submitedAt: "desc",
+        },
+      });
+
+      res.status(200).json(unpaidStudents);
+    } catch (error) {
+      console.error("Error fetching unpaid students:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  },
   updateStudentStatus: async (req: Request, res: Response) => {
     const { id } = req.params;
     const { hasPaid, isAbsent } = req.body;

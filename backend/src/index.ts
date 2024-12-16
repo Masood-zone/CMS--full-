@@ -98,6 +98,13 @@ app.get("/records", authenticateToken, async (req, res, next) => {
     next(error);
   }
 });
+app.get("/records/unpaid", authenticateToken, async (req, res, next) => {
+  try {
+    await recordController.getUnpaidStudents(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 app.get("/records/submitted", authenticateToken, async (req, res, next) => {
   try {
     await recordController.getSubmittedRecordsByDate(req, res);

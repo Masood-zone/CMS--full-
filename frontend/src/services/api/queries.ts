@@ -112,6 +112,15 @@ export const useFetchStudents = () => {
   });
 };
 /**
+ * Query: Fetch all unpaid students.
+ */
+export const useFetchUnpaidStudents = () => {
+  return useQuery(["unpaidStudents"], async () => {
+    const response = await apiClient.get("/records/unpaid");
+    return response.data;
+  });
+};
+/**
  * Query: Fetch all students of a class.
  */
 export const useFetchStudentsByClass = (id: number) => {
