@@ -274,7 +274,10 @@ export const recordController = {
         include: { student: true },
       });
 
-      res.status(200).json(records);
+      const filteredRecords = records.filter(
+        (record) => record.student !== null
+      );
+      res.status(200).json(filteredRecords);
     } catch (error) {
       console.error("Error fetching student records:", error);
       res.status(500).json({ error: "Internal Server Error" });

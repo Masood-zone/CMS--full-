@@ -98,7 +98,7 @@ interface ProtectedRouteProps {
 type CanteenRecord = {
   id: number;
   amount: number;
-  submitedAt: string;
+  submitedAt?: number;
   submitedBy: number;
   payedBy: number | null;
   isPrepaid: boolean;
@@ -223,7 +223,7 @@ interface Prepayments {
   };
 }
 type Prepayment = Omit<Prepayments, "">;
-type CreatePrepayment = Omit<Prepayments, "id", "student">;
+type CreatePrepayment = Omit<Prepayments, "id", "student"> & { userId: number };
 type UpdatePrepayment = Partial<Prepayments> & { id: number };
 
 type Expense = {

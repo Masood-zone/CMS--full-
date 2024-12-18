@@ -49,8 +49,9 @@ export const userController = {
       return res.status(400).json({ error: "Invalid credentials" });
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: `Invalid credentials` });
     }
 
     const token = jwt.sign(

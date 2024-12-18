@@ -41,6 +41,7 @@ export default function SetupCanteen() {
     handleUpdateStatus,
     handleGenerateRecords,
     handleSubmitCanteen,
+    adminId,
   } = useCanteenSetup();
 
   return (
@@ -139,7 +140,7 @@ export default function SetupCanteen() {
               </SelectContent>
             </Select>
             <div>
-              <PrepaymentForm classId={selectedClassId} />
+              <PrepaymentForm adminId={adminId} classId={selectedClassId} />
             </div>
           </div>
           <PrepaymentTable classId={selectedClassId} />

@@ -124,6 +124,7 @@ export function useCanteenSetup() {
     activeTab,
     setActiveTab,
     classes,
+    adminId,
     classesLoading,
     recordsLoading,
     updatingLoader,

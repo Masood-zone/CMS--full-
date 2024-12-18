@@ -31,9 +31,10 @@ import { useState } from "react";
 
 interface PrepaymentFormProps {
   classId: string;
+  adminId?: number;
 }
 
-export function PrepaymentForm({ classId }: PrepaymentFormProps) {
+export function PrepaymentForm({ adminId, classId }: PrepaymentFormProps) {
   const {
     students,
     price,
@@ -62,6 +63,7 @@ export function PrepaymentForm({ classId }: PrepaymentFormProps) {
       numberOfDays: numberOfDays,
       amount: expectedAmount,
       classId,
+      userId: adminId,
     };
 
     try {

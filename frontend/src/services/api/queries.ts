@@ -29,11 +29,6 @@ import {
   fetchReference,
   fetchRecords,
   createRecordsAmount,
-  // updateTeacher,
-  // createTeacher,
-  // fetchTeacherAnalytics,
-  // getTeacherSubmittedRecords,
-  // getTeacherRecords,
   generateRecordForADate,
   fetchSupervisors,
   fetchSupervisor,
@@ -42,6 +37,11 @@ import {
   createPrepayment,
   updatePrepayment,
   fetchPrepayments,
+  // updateTeacher,
+  // createTeacher,
+  // fetchTeacherAnalytics,
+  // getTeacherSubmittedRecords,
+  // getTeacherRecords,
 } from "@/services/api";
 import { apiClient } from "../root";
 import { useNavigate } from "react-router-dom";
@@ -371,10 +371,10 @@ export const useUpdateUser = () => {
 //     }
 //   );
 // };
+
 /*
  * Query: Fetch all submitted records of a user by date.
  */
-
 export const useFetchSubmittedRecords = (date: string) => {
   return useQuery<[], Error>(
     ["submittedRecords", date],
@@ -462,8 +462,8 @@ export const useCreatePrepayment = () => {
   return useMutation((data: CreatePrepayment) => createPrepayment(data), {
     onSuccess: () => {
       toast.success("Prepayment created successfully!");
-      queryClient.invalidateQueries(["records"]);
       queryClient.invalidateQueries(["prepayments"]);
+      queryClient.invalidateQueries(["records"]);
     },
     onError: (error) => {
       console.error(error);
@@ -750,7 +750,7 @@ export const useAdminDashboardAnalytics = () => {
 
 /**
  * Delete a resource and handle errors.
- * @param resource - API endpoint for the resource (e.g., "teachers").
+ * @param resource - API endpoint for the resource (e.g., "users","students","classes").
  */
 export const useDeleteResource = (resource: string, queryKey: string) => {
   const queryClient = useQueryClient();

@@ -1,12 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import { eachDayOfInterval, isWeekend } from "date-fns";
 
 const prisma = new PrismaClient();
 
 export const prepaymentController = {
   createPrepayment: async (req: Request, res: Response) => {
-    const { amount, startDate, endDate, numberOfDays, studentId, classId } =
-      req.body;
+    const {
+      amount,
+      startDate,
+      endDate,
+      numberOfDays,
+      studentId,
+      classId,
+      userId,
+    } = req.body;
 
     try {
       const prepayment = await prisma.prepayment.create({
@@ -19,6 +27,38 @@ export const prepaymentController = {
           classId: parseInt(classId),
         },
       });
+
+      // Update existing records or create new ones for the prepayment period
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const dailyAmount = parseFloat(amount) / parseInt(numberOfDays);
+
+      for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+        await prisma.record.upsert({
+          where: {
+            payedBy_submitedAt: {
+              payedBy: parseInt(studentId),
+              submitedAt: new Date(date),
+            },
+          },
+          update: {
+            amount: dailyAmount,
+            isPrepaid: true,
+            hasPaid: true,
+          },
+          create: {
+            amount: dailyAmount,
+            submitedAt: new Date(date),
+            submitedBy: parseInt(userId), // Assuming req.user is set by authentication middleware
+            payedBy: parseInt(studentId),
+            isPrepaid: true,
+            hasPaid: true,
+            isAbsent: false,
+            settingsAmount: dailyAmount,
+            classId: parseInt(classId),
+          },
+        });
+      }
 
       res.status(201).json(prepayment);
     } catch (error) {
@@ -103,18 +143,41 @@ export const prepaymentController = {
 
   updatePrepayment: async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { amount, startDate, endDate, numberOfDays } = req.body;
+    const { amount, startDate, endDate } = req.body;
 
     try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const numberOfDays = eachDayOfInterval({ start, end }).filter(
+        (date) => !isWeekend(date)
+      ).length;
+
       const updatedPrepayment = await prisma.prepayment.update({
         where: { id: parseInt(id) },
         data: {
           amount: parseFloat(amount),
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-          numberOfDays: parseInt(numberOfDays),
+          startDate: start,
+          endDate: end,
+          numberOfDays,
         },
       });
+
+      // Update existing prepaid records
+      await prisma.record.updateMany({
+        where: {
+          payedBy: updatedPrepayment.studentId,
+          isPrepaid: true,
+          submitedAt: {
+            gte: start,
+            lte: end,
+          },
+        },
+        data: {
+          amount: parseFloat(amount) / numberOfDays,
+          settingsAmount: parseFloat(amount) / numberOfDays,
+        },
+      });
+
       res.status(200).json(updatedPrepayment);
     } catch (error) {
       console.error("Error updating prepayment:", error);
