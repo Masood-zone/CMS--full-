@@ -204,6 +204,9 @@ export const recordController = {
       const records = await prisma.record.findMany({
         where: {
           submitedBy: parseInt(adminId),
+          student: {
+            isNot: null,
+          },
         },
         include: {
           student: {
