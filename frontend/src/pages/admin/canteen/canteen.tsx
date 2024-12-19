@@ -124,6 +124,20 @@ export default function CanteenRecords() {
             <CardsSkeleton count={3} />
           ) : error ? (
             <p>Error loading submitted records</p>
+          ) : submittedRecords?.length === 0 ? (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-destructive">
+                  No Submitted Records Found
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>
+                  No records have been submitted for{" "}
+                  {format(date, "MMMM d, yyyy")}.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {submittedRecords?.map(
@@ -173,6 +187,20 @@ export default function CanteenRecords() {
         <TabsContent value="prepayments">
           {prepaymentsLoading ? (
             <CardsSkeleton count={3} />
+          ) : prepayments?.length === 0 ? (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-destructive">
+                  No Prepayments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>
+                  No prepayments have been made for{" "}
+                  {format(date, "MMMM d, yyyy")}.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {prepayments?.map((prepayment: Prepayment) => (
@@ -218,6 +246,17 @@ export default function CanteenRecords() {
             <CardsSkeleton count={3} />
           ) : owingStudentsError ? (
             <p>Error loading owings records</p>
+          ) : owingStudents?.length === 0 ? (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-destructive">
+                  No Owings Found
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>No students owe for {format(date, "MMMM d, yyyy")}.</p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {owingStudents?.map(
