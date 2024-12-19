@@ -140,17 +140,17 @@ export default function TeacherRecordsDetail() {
             <TableBody>
               {groupedRecords[currentDate].map((record: Record) => (
                 <TableRow key={record.id}>
-                  <TableCell>{record.student.name}</TableCell>
-                  <TableCell>₵{record.amount.toFixed(2)}</TableCell>
+                  <TableCell>{record?.student?.name}</TableCell>
+                  <TableCell>₵{record?.amount?.toFixed(2)}</TableCell>
                   <TableCell>
-                    <Checkbox checked={record.hasPaid} disabled />
+                    <Checkbox checked={record?.hasPaid} disabled />
                   </TableCell>
                   <TableCell>
-                    <Checkbox checked={record.isAbsent} disabled />
+                    <Checkbox checked={record?.isAbsent} disabled />
                   </TableCell>
                   <TableCell>
                     <Checkbox
-                      checked={!record.hasPaid && !record.isAbsent}
+                      checked={!record?.hasPaid && !record?.isAbsent}
                       disabled
                     />
                   </TableCell>

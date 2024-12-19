@@ -380,7 +380,7 @@ export const useFetchSubmittedRecords = (date: string) => {
     ["submittedRecords", date],
     async () => {
       const response = await apiClient.get(`/records/submitted?date=${date}`);
-      return response.data;
+      return response?.data;
     },
     {
       enabled: !!date,

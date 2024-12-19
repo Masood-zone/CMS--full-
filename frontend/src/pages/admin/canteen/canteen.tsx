@@ -229,15 +229,15 @@ export default function CanteenRecords() {
                   submitedAt: string;
                 }) => (
                   <Card
-                    key={student.id}
+                    key={student?.id}
                     className="hover:bg-accent/50 transition-colors"
                   >
                     <CardHeader>
-                      <CardTitle>{student.student.name}</CardTitle>
+                      <CardTitle>{student?.student?.name}</CardTitle>
                       <CardDescription className="text-lg">
                         <span className="">Amount Owing:</span>{" "}
                         <span className="text-destructive font-bold">
-                          ₵{student.amount.toFixed(2)}
+                          ₵{student?.amount?.toFixed(2)}
                         </span>
                       </CardDescription>
                     </CardHeader>
