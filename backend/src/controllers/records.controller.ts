@@ -401,11 +401,30 @@ export const recordController = {
   },
 
   getUnpaidStudents: async (req: Request, res: Response) => {
+    const { date } = req.query;
+    const queryDate = date ? new Date(date as string) : new Date();
+
+    if (isNaN(queryDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date provided" });
+    }
+
     try {
+      const startOfDay = new Date(queryDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(queryDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
       const unpaidStudents = await prisma.record.findMany({
         where: {
           hasPaid: false,
           isAbsent: false,
+          submitedAt: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          student: {
+            isNot: null, // Ensure the student still exists
+          },
         },
         include: {
           student: true,

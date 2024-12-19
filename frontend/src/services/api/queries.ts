@@ -115,9 +115,9 @@ export const useFetchStudents = () => {
 /**
  * Query: Fetch all unpaid students.
  */
-export const useFetchUnpaidStudents = () => {
-  return useQuery(["unpaidStudents"], async () => {
-    const response = await apiClient.get("/records/unpaid");
+export const useFetchUnpaidStudents = (date: string) => {
+  return useQuery(["unpaidStudents", date], async () => {
+    const response = await apiClient.get(`/records/unpaid?date=${date}`);
     return response.data;
   });
 };

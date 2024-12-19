@@ -38,7 +38,7 @@ export default function CanteenRecords() {
     data: owingStudents,
     isLoading: owingStudentsLoading,
     error: owingStudentsError,
-  } = useFetchUnpaidStudents();
+  } = useFetchUnpaidStudents(formattedDate);
 
   const { data: prepayments, isLoading: prepaymentsLoading } =
     useFetchPrepayments(); // Fetch all prepayments
